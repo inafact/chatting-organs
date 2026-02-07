@@ -41,7 +41,7 @@ class PipelineManager:
         # model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         temperature=float(os.getenv("TEMPERATURE", "0.8")),
-        per_scene_length=1000
+        per_scene_length={ 1: 1000, 2: 2000, 3: 2000, 4: 1500 }
     )
 
     results = pipeline.run()
@@ -52,17 +52,17 @@ class PipelineManager:
 
     # --- 2. 音声生成 (Gemini TTS) ---
     dp = [
-      # """
-      # ### DIRECTOR'S NOTES
+      """
+      ### DIRECTOR'S NOTES
 
-      # Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
-      # """,
+      Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
+      """,
       """
       ### DIRECTOR'S NOTES FOR ドローン
 
       Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
 
-      ### DIRECTOR'S NOTES FOR ドローン
+      ### DIRECTOR'S NOTES FOR カタパルト
 
       Pacing: Speaks at an exhausted pace, keeping up with the extremely slow
       """,
@@ -76,12 +76,11 @@ class PipelineManager:
       Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
       """,
 
-      # """
-      # - 全体的に興奮した調子で読み上げてください。
-      # - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
-      # - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
-      # - セリフ内の（）の中に書かれている感情表現や間のとり方、読み方の指示にも従ってください。ただし、（）内を直接読み上げない事。
-      # """
+      """
+      - 全体的に興奮した調子で読み上げてください。
+      - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
+      - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
+      """
     ]
 
     tts = TTSPipeline(

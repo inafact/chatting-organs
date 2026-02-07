@@ -103,7 +103,10 @@ class TTSPipeline:
         """1チャンク分の音声を生成し、PCM bytes を返す"""
         text = "\n".join(f"{dl.speaker}: {dl.line}" for dl in chunk)
 
-        use_director_prompt = self.director_prompt if type(self.director_prompt) != list else self.director_prompt[min(len(self.director_prompt), self.current_scene_index)]
+        use_director_prompt = self.director_prompt
+        if type(self.director_prompt) is list:
+          use_director_prompt = self.director_prompt[min(len(self.director_prompt) - 1, self.current_scene_index)]
+
         print(use_director_prompt)
 
         response = self.client.models.generate_content(

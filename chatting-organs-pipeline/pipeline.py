@@ -9,9 +9,9 @@ from models import DialogueLine, SceneResult
 
 SCENE_INFO = {
     1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」"},
-    # 2: {"label": "登場人物紹介", "setting": "ロシアによって占拠されたウクライナの地域"},
-    # 3: {"label": "対立の明確化と概念の深化", "setting": "沖縄アメリカ軍基地前"},
-    # 4: {"label": "激論と分断・決裂", "setting": "東京・丸の内アートセンター「BUG」"},
+    2: {"label": "登場人物紹介", "setting": "ロシアによって占拠されたウクライナの地域"},
+    3: {"label": "対立の明確化と概念の深化", "setting": "沖縄アメリカ軍基地前"},
+    4: {"label": "激論と分断・決裂", "setting": "東京・丸の内アートセンター「BUG」"},
 }
 
 # speaker名として許容するパターン
@@ -29,7 +29,7 @@ class DialoguePipeline:
         output_dir: str = "output",
         model: str = "gpt-4o",
         temperature: float = 0.8,
-        per_scene_length: int = 5000
+        per_scene_length: int | list[int] | dict = 5000
     ):
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
         self.output_dir = Path(f"{output_dir}_{datetime.now().isoformat("_").replace(":", "")}")
@@ -123,6 +123,15 @@ class DialoguePipeline:
             for i, text in enumerate(self.generated_scenes, 1):
                 prev_context += f"--- シーン{i} ---\n{text}\n\n"
 
+        use_scene_length = self.per_scene_length
+        if type(self.per_scene_length) is list:
+          use_scene_length = self.per_scene_length[min(len(self.per_scene_length) - 1, scene_num)]
+        elif type(self.per_scene_length) is dict:
+          if scene_num in self.per_scene_length:
+            use_scene_length = self.per_scene_length[scene_num]
+          else:
+            use_scene_length = self.per_scene_length[list(self.per_scene_length.keys())[0]]
+
         description = f"""\
 シーン設計者が作成した指示書に基づき、シーン{scene_num}の対話セリフを生成してください。
 {prev_context}
@@ -134,7 +143,7 @@ class DialoguePipeline:
 ・間を取る場合は長さ分の「…」で表現する
 ・シーン番号や見出し行は含めない
 ・空行を入れない
-・目標文字数：約{self.per_scene_length}字（セリフの総文字数）
+・目標文字数：約{use_scene_length}字（セリフの総文字数）
 
 出力例：
 ドローン：ここ天井高いよね
@@ -144,7 +153,7 @@ class DialoguePipeline:
         return Task(
             description=description,
             expected_output=(
-                f"シーン{scene_num}の対話セリフ約{self.per_scene_length}字。"
+                f"シーン{scene_num}の対話セリフ約{use_scene_length}字。"
                 "全行が「ドローン：」か「カタパルト：」で始まる。"
             ),
             agent=self.writer,
