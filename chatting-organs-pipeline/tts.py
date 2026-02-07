@@ -26,7 +26,7 @@ class TTSPipeline:
         voices: dict[str, str] | None = None,
         model: str = "gemini-2.5-flash-tts",
         chunk_max_bytes: int = _CHUNK_MAX_BYTES,
-        director_prompt: str = ""
+        director_prompt: str | list[str] = ""
     ):
         self.client = genai.Client()  # GOOGLE_API_KEY or GEMINI_API_KEY env var
         self.output_dir = Path(output_dir)
@@ -35,6 +35,7 @@ class TTSPipeline:
         self.model = model
         self.chunk_max_bytes = chunk_max_bytes
         self.director_prompt = director_prompt
+        self.current_scene_index = 0
 
     # ------------------------------------------------------------------ #
     #  TSV I/O
@@ -102,10 +103,13 @@ class TTSPipeline:
         """1チャンク分の音声を生成し、PCM bytes を返す"""
         text = "\n".join(f"{dl.speaker}: {dl.line}" for dl in chunk)
 
+        use_director_prompt = self.director_prompt if type(self.director_prompt) != list else self.director_prompt[min(len(self.director_prompt), self.current_scene_index)]
+        print(use_director_prompt)
+
         response = self.client.models.generate_content(
             model=self.model,
             contents=f"""
-            {self.director_prompt}
+            {use_director_prompt}
 
             {text}
             """,
@@ -137,7 +141,9 @@ class TTSPipeline:
     #  Public API
     # ------------------------------------------------------------------ #
     def generate_scene_audio(
-        self, lines: list[DialogueLine], filename: str
+        self,
+        lines: list[DialogueLine],
+        filename: str
     ) -> Path:
         """DialogueLine リストから WAV ファイルを生成"""
         chunks = self._chunk_lines(lines)
@@ -157,13 +163,13 @@ class TTSPipeline:
         """複数 TSV ファイルからシーンごとの WAV を生成"""
         wav_files: list[Path] = []
 
-        for tsv_path in tsv_paths:
+        for i, tsv_path in enumerate(tsv_paths):
             print(f"\n  音声生成: {tsv_path.name}")
             lines = self.read_tsv(tsv_path)
             if not lines:
                 print("    スキップ (セリフなし)")
                 continue
-
+            self.current_scene_index = i
             wav_name = tsv_path.stem + ".wav"
             wav_path = self.generate_scene_audio(lines, wav_name)
             wav_files.append(wav_path)

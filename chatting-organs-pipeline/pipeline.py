@@ -29,7 +29,7 @@ class DialoguePipeline:
         output_dir: str = "output",
         model: str = "gpt-4o",
         temperature: float = 0.8,
-        per_scene_length: int = 8000
+        per_scene_length: int = 5000
     ):
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
         self.output_dir = Path(f"{output_dir}_{datetime.now().isoformat("_").replace(":", "")}")
