@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import asyncio
 from random import sample, choice
+import tomllib
 
 from dotenv import load_dotenv
 
@@ -26,6 +27,9 @@ class PipelineManager:
     self.pipeline_running = False
     self.player_address = player_address
     self.player_port = player_port
+    self.directors_notes = []
+    self.render_scenes = dict()
+    # -- TODO:
     self.voices_gemini = {
       "Zephyr": "Bright"
       , "Puck": "Upbeat"
@@ -58,6 +62,30 @@ class PipelineManager:
       , "Sadaltager": "知識が豊富"
       , "Sulafat": "Warm"
     }
+    # --
+    self._reload_configs()
+
+  def reload_env(self, client_address, address, *args):
+    load_dotenv()
+    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 1)
+
+  def reload_configs(self, client_address, address, *args):
+    print(args)
+    self._reload_configs()
+    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 1)
+
+  def _reload_configs(self):
+    with open("./app_config.toml", "rb") as f:
+      data = tomllib.load(f)
+      if "directors_notes" in data:
+        print("loading [directors_notes]..")
+        self.directors_notes = data["directors_notes"]
+      if "render_scenes" in data:
+        print("loading [render_scenes]..")
+        for k, el in enumerate(data["render_scenes"]):
+          self.render_scenes[int(el)] = data["render_scenes"][el]
+    print(self.render_scenes)
+    print(self.directors_notes)
 
   def run_pipeline(self, client_address, address, *args):
     paths: list
@@ -99,7 +127,7 @@ class PipelineManager:
         # model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         temperature=float(os.getenv("TEMPERATURE", "0.8")),
-        per_scene_length={ 1: 800, 2: 2000, 3: 2000, 4: 1500 }
+        per_scene_length=self.render_scenes
     )
 
     results = pipeline.run()
@@ -109,39 +137,39 @@ class PipelineManager:
     print(f"next: {datetime.now()}")
 
     #": " --- 2. 音声生成 (Gemini TTS)": " ---
-    dp = [
-      # """
-      # ### DIRECTOR'S NOTES
+    # dp = [
+    #   """
+    #   ### DIRECTOR'S NOTES
 
-      # Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
-      # """,
-      """
-      ### DIRECTOR'S NOTES FOR ドローン
+    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
+    #   """,
+    #   """
+    #   ### DIRECTOR'S NOTES FOR ドローン
 
-      Character: Old woman
-      Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
+    #   Character: Old woman
+    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
 
-      ### DIRECTOR'S NOTES FOR カタパルト
+    #   ### DIRECTOR'S NOTES FOR カタパルト
 
-      Character: Young man, high-tone voice
-      Pacing: Speaks at an exhausted pace, keeping up with the extremely slow
-      """,
-      """
-      ### DIRECTOR'S NOTES FOR ドローン
+    #   Character: Young man, high-tone voice
+    #   Pacing: Speaks at an exhausted pace, keeping up with the extremely slow
+    #   """,
+    #   """
+    #   ### DIRECTOR'S NOTES FOR ドローン
 
-      Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
+    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
 
-      ### DIRECTOR'S NOTES FOR カタパルト
+    #   ### DIRECTOR'S NOTES FOR カタパルト
 
-      Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
-      """,
+    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
+    #   """,
 
-      """
-      - 全体的に興奮した調子で読み上げてください。
-      - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
-      - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
-      """
-    ]
+    #   """
+    #   - 全体的に興奮した調子で読み上げてください。
+    #   - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
+    #   - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
+    #   """
+    # ]
 
     tts = TTSPipeline(
         output_dir=pipeline.output_dir,
@@ -151,7 +179,7 @@ class PipelineManager:
         },
         model=os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts"),
         chunk_max_bytes=5000,
-        director_prompt=dp
+        director_prompt=self.directors_notes
     )
 
     tsv_files = sorted(pipeline.output_dir.glob("scene_*.tsv"))
@@ -181,11 +209,19 @@ class PipelineManager:
       str(Path(aligned_tsvs[-1]).resolve())
     ]
 
+# ======================
+# Initialize
+# ======================
+
 manager = PipelineManager(
   player_address = os.getenv("PLAYER_OSC_ADDR", "127.0.0.1"),
   player_port = int(os.getenv("PLAYER_OSC_PORT", 10001))
 )
+
 dispatcher.map("/run_pipeline", manager.run_pipeline, needs_reply_address=True)
+dispatcher.map("/reload_env", manager.reload_env, needs_reply_address=True)
+dispatcher.map("/reload_configs", manager.reload_configs, needs_reply_address=True)
+
 
 async def loop():
   try:

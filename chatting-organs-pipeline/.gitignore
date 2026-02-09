@@ -14,3 +14,5 @@ wheels/
 
 # Generated output
 output_*/
+output/
+outputs/
