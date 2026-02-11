@@ -67,12 +67,11 @@ class PipelineManager:
 
   def reload_env(self, client_address, address, *args):
     load_dotenv()
-    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 1)
+    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 2)
 
   def reload_configs(self, client_address, address, *args):
-    print(args)
     self._reload_configs()
-    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 1)
+    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 3)
 
   def _reload_configs(self):
     with open("./app_config.toml", "rb") as f:
@@ -82,6 +81,7 @@ class PipelineManager:
         self.directors_notes = data["directors_notes"]
       if "render_scenes" in data:
         print("loading [render_scenes]..")
+        self.render_scenes = dict()
         for k, el in enumerate(data["render_scenes"]):
           self.render_scenes[int(el)] = data["render_scenes"][el]
     print(self.render_scenes)
@@ -127,7 +127,7 @@ class PipelineManager:
         # model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         temperature=float(os.getenv("TEMPERATURE", "0.8")),
-        per_scene_length=self.render_scenes
+        render_scenes=self.render_scenes
     )
 
     results = pipeline.run()
@@ -137,40 +137,6 @@ class PipelineManager:
     print(f"next: {datetime.now()}")
 
     #": " --- 2. 音声生成 (Gemini TTS)": " ---
-    # dp = [
-    #   """
-    #   ### DIRECTOR'S NOTES
-
-    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
-    #   """,
-    #   """
-    #   ### DIRECTOR'S NOTES FOR ドローン
-
-    #   Character: Old woman
-    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
-
-    #   ### DIRECTOR'S NOTES FOR カタパルト
-
-    #   Character: Young man, high-tone voice
-    #   Pacing: Speaks at an exhausted pace, keeping up with the extremely slow
-    #   """,
-    #   """
-    #   ### DIRECTOR'S NOTES FOR ドローン
-
-    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
-
-    #   ### DIRECTOR'S NOTES FOR カタパルト
-
-    #   Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
-    #   """,
-
-    #   """
-    #   - 全体的に興奮した調子で読み上げてください。
-    #   - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
-    #   - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
-    #   """
-    # ]
-
     tts = TTSPipeline(
         output_dir=pipeline.output_dir,
         voices={

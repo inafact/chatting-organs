@@ -1,10 +1,10 @@
 from pathlib import Path
+import wave
 
 from elevenlabs import ElevenLabs
 
 from models import AlignedLine, DialogueLine
 from tts import TTSPipeline
-
 
 class AlignmentPipeline:
     """WAV + TSV → ElevenLabs Forced Alignment → タイムスタンプ付き TSV
@@ -64,7 +64,9 @@ class AlignmentPipeline:
                 AlignedLine(
                     speaker=dl.speaker,
                     line=dl.line,
+                    line_en=dl.line_en,
                     start_time=round(start, 3),
+                    stem_file_path=""
                 )
             )
 
@@ -79,7 +81,9 @@ class AlignmentPipeline:
         path = self.output_dir / filename
         with open(path, "w", encoding="utf-8") as f:
             for al in aligned:
-                f.write(f"{al.speaker}\t{al.line}\t{al.start_time:.3f}\n")
+                f.write(
+                  f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}\t{al.stem_file_path}\n"
+                )
         return path
 
     # ------------------------------------------------------------------ #
@@ -104,17 +108,51 @@ class AlignmentPipeline:
             lines = TTSPipeline.read_tsv(tsv_path)
             aligned = self.align_scene(lines, wav_path)
 
+            # split each dialogue turn
+            swav_path: str = str(wav_path)
+
+            with wave.open(swav_path, "rb") as wf:
+              elapsed: float = 0
+              ioffset: float = 0
+              sr: int = wf.getframerate()
+
+              for i, al in enumerate(aligned):
+                frame_start = min(int(sr * elapsed), wf.getnframes())
+                wf.setpos(frame_start)
+                if i == 0:
+                  ioffset = al.start_time
+                else:
+                  st_f = al.start_time - ioffset
+                  diff_t = st_f - elapsed
+                  numframes = int(sr * diff_t)
+                  data_pcm = bytearray()
+                  data_pcm.extend(wf.readframes(numframes))
+                  stem_file_path = Path(swav_path.replace(".wav", f"_{frame_start}.wav"))
+                  TTSPipeline._save_wav(bytes(data_pcm), stem_file_path)
+                  aligned[i - 1].stem_file_path = str(stem_file_path.absolute())
+                  elapsed = elapsed + diff_t
+
+              # one more
+              frame_start = min(int(sr * elapsed), wf.getnframes())
+              wf.setpos(frame_start)
+              numframes = wf.getnframes() - frame_start
+              data_pcm = bytearray()
+              data_pcm.extend(wf.readframes(numframes))
+              stem_file_path = Path(swav_path.replace(".wav", f"_{frame_start}.wav"))
+              TTSPipeline._save_wav(bytes(data_pcm), stem_file_path)
+              aligned[-1].stem_file_path = str(stem_file_path.absolute())
+
+            # all_aligned.extend(aligned)
             out = self._write_aligned_tsv(
-                aligned, tsv_path.stem + "_aligned.tsv"
+              aligned, tsv_path.stem + "_aligned.tsv"
             )
             result_paths.append(out)
-            all_aligned.extend(aligned)
 
             print(f"    -> {out}  ({len(aligned)} 行)")
 
         # 全シーン統合
-        if len(result_paths) > 1:
-            combined = self._write_aligned_tsv(all_aligned, "all_scenes_aligned.tsv")
-            print(f"\n  統合アライメント TSV: {combined}")
+        # if len(result_paths) > 1:
+        #     combined = self._write_aligned_tsv(all_aligned, "all_scenes_aligned.tsv")
+        #     print(f"\n  統合アライメント TSV: {combined}")
 
         return result_paths

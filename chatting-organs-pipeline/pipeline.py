@@ -7,11 +7,12 @@ from crewai import Agent, Crew, LLM, Process, Task
 
 from models import DialogueLine, SceneResult
 
-SCENE_INFO = {
-    1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」"},
-    2: {"label": "登場人物紹介", "setting": "ロシアによって占拠されたウクライナの地域"},
-    3: {"label": "対立の明確化と概念の深化", "setting": "沖縄アメリカ軍基地前"},
-    4: {"label": "激論と分断・決裂", "setting": "東京・丸の内アートセンター「BUG」"},
+DEFAULT_SCENE_INFO = {
+    1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
+    2: {"label": "登場人物紹介", "setting": "ロシアによって占拠されたウクライナの地域", "length": 1000 },
+    3: {"label": "対立の明確化と概念の深化", "setting": "沖縄アメリカ軍基地前", "length": 1000 },
+    4: {"label": "激論と分断・決裂", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
+    5: {"label": "エピローグ", "setting": "生成AIサービスプロンプト実行後の画面", "length": 1000 }
 }
 
 # speaker名として許容するパターン
@@ -29,7 +30,7 @@ class DialoguePipeline:
         output_dir: str = "outputs",
         model: str = "gpt-4o",
         temperature: float = 0.8,
-        per_scene_length: int | list[int] | dict = 5000
+        render_scenes: dict = DEFAULT_SCENE_INFO
     ):
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
         self.output_dir = Path(f"{output_dir}/{datetime.now().isoformat("_").replace(":", "")}")
@@ -41,7 +42,7 @@ class DialoguePipeline:
         # --
 
         self.generated_scenes: list[str] = []
-        self.per_scene_length = per_scene_length
+        self.render_scenes = render_scenes
 
         # --- Agents ---
         self.planner = Agent(
@@ -72,11 +73,22 @@ class DialoguePipeline:
             verbose=True,
         )
 
+        self.translator = Agent(
+            role="翻訳者",
+            goal="日本語の対話セリフを自然な英語に翻訳する",
+            backstory=(
+                "日英翻訳の専門家。演劇・哲学・政治のテキストを"
+                "文脈とニュアンスを保ちながら自然な英語に翻訳する。"
+            ),
+            llm=self.llm,
+            verbose=False,
+        )
+
     # ------------------------------------------------------------------ #
     #  Task builders
     # ------------------------------------------------------------------ #
     def _build_planner_task(self, scene_num: int) -> Task:
-        info = SCENE_INFO[scene_num]
+        info = self.render_scenes[scene_num]
 
         prev_summary = ""
         if self.generated_scenes:
@@ -123,14 +135,7 @@ class DialoguePipeline:
             for i, text in enumerate(self.generated_scenes, 1):
                 prev_context += f"--- シーン{i} ---\n{text}\n\n"
 
-        use_scene_length = self.per_scene_length
-        if type(self.per_scene_length) is list:
-          use_scene_length = self.per_scene_length[min(len(self.per_scene_length) - 1, scene_num)]
-        elif type(self.per_scene_length) is dict:
-          if scene_num in self.per_scene_length:
-            use_scene_length = self.per_scene_length[scene_num]
-          else:
-            use_scene_length = self.per_scene_length[list(self.per_scene_length.keys())[0]]
+        use_scene_length = self.render_scenes[scene_num]["length"]
 
         description = f"""\
 シーン設計者が作成した指示書に基づき、シーン{scene_num}の対話セリフを生成してください。
@@ -160,6 +165,34 @@ class DialoguePipeline:
             context=[planner_task],
         )
 
+    def _build_translator_task(self, scene_num: int, writer_task: Task) -> Task:
+        description = f"""\
+シーン{scene_num}の対話セリフを英語に翻訳してください。
+
+【絶対遵守の出力ルール】
+・各行は必ず「ドローン：」または「カタパルト：」で始める（話者名は日本語のまま、全角コロン）
+・セリフ部分のみを英語に翻訳する
+・行数と順序を原文と完全に一致させる
+・ト書き、状況描写、括弧書きの説明は一切含めない
+・シーン番号や見出し行は含めない
+・空行を入れない
+
+出力例：
+ドローン：The ceiling here is really high, isn't it?
+カタパルト：Yeah, it must be over seven meters
+ドローン：Seems like I could spin my propellers without any problem
+"""
+        return Task(
+            description=description,
+            expected_output=(
+                f"シーン{scene_num}の全セリフの英語翻訳。"
+                "全行が「ドローン：」か「カタパルト：」で始まる。"
+                "行数・順序は原文と一致。"
+            ),
+            agent=self.translator,
+            context=[writer_task],
+        )
+
     # ------------------------------------------------------------------ #
     #  Parse / TSV
     # ------------------------------------------------------------------ #
@@ -182,7 +215,7 @@ class DialoguePipeline:
         path = self.output_dir / filename
         with open(path, "w", encoding="utf-8") as f:
             for dl in lines:
-                f.write(f"{dl.speaker}\t{dl.line}\n")
+                f.write(f"{dl.speaker}\t{dl.line}\t{dl.line_en}\n")
         return path
 
     # ------------------------------------------------------------------ #
@@ -191,16 +224,17 @@ class DialoguePipeline:
     def run(self) -> list[SceneResult]:
         results: list[SceneResult] = []
 
-        for scene_num in SCENE_INFO:
-            info = SCENE_INFO[scene_num]
-            print(f"  シーン {scene_num}/{len(SCENE_INFO)} : {info['label']}")
+        for scene_num in self.render_scenes:
+            info = self.render_scenes[scene_num]
+            print(f"  シーン {scene_num}/{len(self.render_scenes)} : {info['label']}")
 
             planner_task = self._build_planner_task(scene_num)
             writer_task = self._build_writer_task(scene_num, planner_task)
+            translator_task = self._build_translator_task(scene_num, writer_task)
 
             crew = Crew(
-                agents=[self.planner, self.writer],
-                tasks=[planner_task, writer_task],
+                agents=[self.planner, self.writer, self.translator],
+                tasks=[planner_task, writer_task, translator_task],
                 process=Process.sequential,
                 # verbose=True,
                 tracing=False,
@@ -208,16 +242,29 @@ class DialoguePipeline:
             )
 
             output = crew.kickoff()
-            raw = output.raw
-            self.generated_scenes.append(raw)
 
-            parsed = self.parse_lines(raw)
+            # writer の出力（日本語）は writer_task.output.raw から取得
+            raw_ja = writer_task.output.raw
+            # translator の出力（英語）は最終出力から取得
+            raw_en = output.raw
+
+            self.generated_scenes.append(raw_ja)
+
+            parsed_ja = self.parse_lines(raw_ja)
+            parsed_en = self.parse_lines(raw_en)
+
+            # zip して line_en を設定（行数不一致の場合はデフォルト空文字）
+            for i, dl in enumerate(parsed_ja):
+                if i < len(parsed_en):
+                    dl.line_en = parsed_en[i].line
+
+            parsed = parsed_ja
             char_count = sum(len(dl.line) for dl in parsed)
 
             result = SceneResult(
                 scene_number=scene_num,
                 lines=parsed,
-                raw_text=raw,
+                raw_text=raw_ja,
                 char_count=char_count,
             )
             results.append(result)

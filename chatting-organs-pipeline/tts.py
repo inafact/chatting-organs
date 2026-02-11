@@ -32,6 +32,7 @@ class TTSPipeline:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         self.voices = voices or DEFAULT_VOICES.copy()
+        # self.voices_marker = "_".join(self.voices.values()).lower()
         self.model = model
         self.chunk_max_bytes = chunk_max_bytes
         self.director_prompt = director_prompt
@@ -48,9 +49,10 @@ class TTSPipeline:
                 row = row.strip()
                 if not row:
                     continue
-                parts = row.split("\t", 1)
-                if len(parts) == 2:
-                    lines.append(DialogueLine(speaker=parts[0], line=parts[1]))
+                parts = row.split("\t", 2)
+                if len(parts) >= 2:
+                    line_en = parts[2] if len(parts) == 3 else ""
+                    lines.append(DialogueLine(speaker=parts[0], line=parts[1], line_en=line_en))
         return lines
 
     # ------------------------------------------------------------------ #
@@ -179,9 +181,9 @@ class TTSPipeline:
             print(f"    -> {wav_path}")
 
         # 全シーン結合
-        if len(wav_files) > 1:
-            combined = self._combine_wavs(wav_files, "all_scenes.wav")
-            print(f"\n  統合 WAV: {combined}")
+        # if len(wav_files) > 1:
+        #     combined = self._combine_wavs(wav_files, "all_scenes.wav")
+        #     print(f"\n  統合 WAV: {combined}")
 
         return wav_files
 
