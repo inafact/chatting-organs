@@ -1,9 +1,3 @@
-# render_scenes = { 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800 }, 2 = {"label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1200 },3 = {"label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 1000 }, 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1200 }, 5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 600 } }
-
-# render_scenes = { 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 1000 }, 2 = {"label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 2000 },3 = {"label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2500 }, 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 2000 }, 5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 500 } }
-
-render_scenes = { 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300 } }
-
 directors_notes = [
   '''
     ### DIRECTOR'S NOTES
@@ -11,31 +5,46 @@ directors_notes = [
     Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
     ''',
   '''
-    ### DIRECTOR'S NOTES FOR ドローン
+    ### DIRECTOR'S NOTES FOR <ドローン>
 
     Pacing: Speaks at an energetic pace, keeping up with the extremely fast, rapid
 
-    ### DIRECTOR'S NOTES FOR カタパルト
+    ### DIRECTOR'S NOTES FOR <カタパルト>
 
     Pacing: Speaks at an exhausted pace, keeping up with the extremely slow
     ''',
   '''
-    ### DIRECTOR'S NOTES FOR ドローン
+    ### DIRECTOR'S NOTES FOR <ドローン>
 
     Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
 
-    ### DIRECTOR'S NOTES FOR カタパルト
+    ### DIRECTOR'S NOTES FOR <カタパルト>
 
     Pacing: Speaks at an energetic pace, keeping up with the extremely fast and angry
     ''',
   '''
-    - 全体的に興奮した調子で読み上げてください。
+    - 興奮した調子で話してください。
     - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
     - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
     ''',
   '''
-    - 全体的に平坦な調子で読み上げてください。
+    - 平坦な調子で話してください。
     - 感情表現を極力抑え、古典的なAIチャットの受け答えのような話し方をしてください。
     - セリフ間で間を十分にとってゆっくり話してください。「…」「、」「。」のいずれかの文字を含む場合もはっきりっと区切ってください。
     '''
 ]
+
+[render_scenes]
+# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300 }
+# 2 = {"label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 600 }
+1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 1000 }
+2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 2000 }
+3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2500 }
+4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 2000 }
+5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 500 }
+
+[image_search]
+enabled = true
+images_dir = "images"
+model_name = "ViT-B-32"
+similarity_threshold = 0.25

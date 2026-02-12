@@ -15,6 +15,7 @@ class AlignedLine(BaseModel):
     line_en: str = ""
     start_time: float  # seconds
     stem_file_path: str
+    reference_image_path: str = ""
 
 
 class SceneResult(BaseModel):

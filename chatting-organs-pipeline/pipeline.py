@@ -17,7 +17,7 @@ DEFAULT_SCENE_INFO = {
 
 # speaker名として許容するパターン
 _SPEAKER_RE = re.compile(
-    r"^\s*\**\s*(ドローン|カタパルト)\s*\**\s*[：:]\s*(.+)", re.DOTALL
+    r"^\s*\**\s*(<ドローン>|<カタパルト>)\s*\**\s*[：:]\s*(.+)", re.DOTALL
 )
 
 
@@ -57,7 +57,7 @@ class DialoguePipeline:
                 "乱数シードによるプール選択の計算も正確に行う。"
             ),
             llm=self.llm,
-            verbose=True,
+            verbose=False,
         )
 
         self.writer = Agent(
@@ -70,7 +70,7 @@ class DialoguePipeline:
                 "哲学的議論から日常雑談まで自在に書き分ける。"
             ),
             llm=self.llm,
-            verbose=True,
+            verbose=False,
         )
 
         self.translator = Agent(
@@ -143,23 +143,23 @@ class DialoguePipeline:
 
 【絶対遵守の出力ルール】
 ・各セリフを1行ずつ出力する
-・各行は必ず「ドローン：」または「カタパルト：」で始める（全角コロン）
+・各行は必ず「<ドローン>：」または「<カタパルト>：」で始める（全角コロン）
 ・ト書き、状況描写、括弧書きの説明は一切含めない
-・間を取る場合は長さ分の「…」で表現する
+・間を取る場合は「…」で表現する、ただし「…」と句読点・感嘆符のみセリフは禁止
 ・シーン番号や見出し行は含めない
 ・空行を入れない
 ・目標文字数：約{use_scene_length}字（セリフの総文字数）
 
 出力例：
-ドローン：ここ天井高いよね
-カタパルト：そうだね、7メートル以上あるんじゃない
-ドローン：僕のプロペラ回しても大丈夫そう
+<ドローン>：ここ天井高いよね
+<カタパルト>：そうだね、7メートル以上あるんじゃない
+<ドローン>：僕のプロペラ回しても大丈夫そう
 """
         return Task(
             description=description,
             expected_output=(
                 f"シーン{scene_num}の対話セリフ約{use_scene_length}字。"
-                "全行が「ドローン：」か「カタパルト：」で始まる。"
+                "全行が「<ドローン>：」か「<カタパルト>：」で始まる。"
             ),
             agent=self.writer,
             context=[planner_task],
@@ -170,7 +170,7 @@ class DialoguePipeline:
 シーン{scene_num}の対話セリフを英語に翻訳してください。
 
 【絶対遵守の出力ルール】
-・各行は必ず「ドローン：」または「カタパルト：」で始める（話者名は日本語のまま、全角コロン）
+・各行は必ず「<ドローン>：」または「<カタパルト>：」で始める（話者名は日本語のまま、全角コロン）
 ・セリフ部分のみを英語に翻訳する
 ・行数と順序を原文と完全に一致させる
 ・ト書き、状況描写、括弧書きの説明は一切含めない
@@ -178,15 +178,15 @@ class DialoguePipeline:
 ・空行を入れない
 
 出力例：
-ドローン：The ceiling here is really high, isn't it?
-カタパルト：Yeah, it must be over seven meters
-ドローン：Seems like I could spin my propellers without any problem
+<ドローン>：The ceiling here is really high, isn't it?
+<カタパルト>：Yeah, it must be over seven meters
+<ドローン>：Seems like I could spin my propellers without any problem
 """
         return Task(
             description=description,
             expected_output=(
                 f"シーン{scene_num}の全セリフの英語翻訳。"
-                "全行が「ドローン：」か「カタパルト：」で始まる。"
+                "全行が「<ドローン>：」か「<カタパルト>：」で始まる。"
                 "行数・順序は原文と一致。"
             ),
             agent=self.translator,
@@ -236,7 +236,6 @@ class DialoguePipeline:
                 agents=[self.planner, self.writer, self.translator],
                 tasks=[planner_task, writer_task, translator_task],
                 process=Process.sequential,
-                # verbose=True,
                 tracing=False,
                 verbose=False,
             )

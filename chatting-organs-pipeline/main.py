@@ -12,6 +12,7 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.udp_client import SimpleUDPClient
 
 from alignment import AlignmentPipeline
+from image_search import ImageSearchPipeline
 from pipeline import DialoguePipeline
 from tts import TTSPipeline
 
@@ -29,6 +30,12 @@ class PipelineManager:
     self.player_port = player_port
     self.directors_notes = []
     self.render_scenes = dict()
+    self.image_search_config = {
+      "enabled": False,
+      "images_dir": "images",
+      "model_name": "ViT-B-32",
+      "similarity_threshold": 0.2,
+    }
     # -- TODO:
     self.voices_gemini = {
       "Zephyr": "Bright"
@@ -84,8 +91,12 @@ class PipelineManager:
         self.render_scenes = dict()
         for k, el in enumerate(data["render_scenes"]):
           self.render_scenes[int(el)] = data["render_scenes"][el]
+      if "image_search" in data:
+        print("loading [image_search]..")
+        self.image_search_config.update(data["image_search"])
     print(self.render_scenes)
     print(self.directors_notes)
+    print(self.image_search_config)
 
   def run_pipeline(self, client_address, address, *args):
     paths: list
@@ -140,11 +151,11 @@ class PipelineManager:
     tts = TTSPipeline(
         output_dir=pipeline.output_dir,
         voices={
-          "ドローン": voices[0],
-          "カタパルト": voices[1]
+          "<ドローン>": voices[0],
+          "<カタパルト>": voices[1]
         },
         model=os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts"),
-        chunk_max_bytes=5000,
+        chunk_max_bytes=int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000)),
         director_prompt=self.directors_notes
     )
 
@@ -165,6 +176,19 @@ class PipelineManager:
     aligned_tsvs = aligner.run(tsv_files, wav_files)
 
     print(f"\nアライメント完了: {len(aligned_tsvs)} ファイル")
+    print(f"next: {datetime.now()}")
+
+    #": " --- 4. 画像検索 (OpenCLIP)": " ---
+    if self.image_search_config.get("enabled", False):
+      image_search = ImageSearchPipeline(
+        output_dir=pipeline.output_dir,
+        images_dir=self.image_search_config.get("images_dir", "images"),
+        model_name=self.image_search_config.get("model_name", "ViT-B-32"),
+        similarity_threshold=self.image_search_config.get("similarity_threshold", 0.2),
+      )
+      aligned_tsvs = image_search.run(aligned_tsvs)
+      print(f"\n画像検索完了: {len(aligned_tsvs)} ファイル")
+
     print(f"finish: {datetime.now()}")
 
     # TODO: error statte

@@ -9,8 +9,8 @@ from models import DialogueLine
 
 # 話者 → Gemini prebuilt voice のデフォルトマッピング
 DEFAULT_VOICES: dict[str, str] = {
-    "ドローン": "Kore",
-    "カタパルト": "Puck",
+    "<ドローン>": "Kore",
+    "<カタパルト>": "Puck",
 }
 
 # Gemini TTS 入力テキストのバイト上限（余裕を持たせた値）
