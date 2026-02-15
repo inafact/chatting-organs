@@ -1,11 +1,14 @@
 import base64
 import wave
 from pathlib import Path
+from threading import Event
 
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError as GeminiServerError
 
 from models import DialogueLine
+from retry_utils import PipelineCancelledError, call_with_retry
 
 # 話者 → Gemini prebuilt voice のデフォルトマッピング
 DEFAULT_VOICES: dict[str, str] = {
@@ -26,7 +29,8 @@ class TTSPipeline:
         voices: dict[str, str] | None = None,
         model: str = "gemini-2.5-flash-tts",
         chunk_max_bytes: int = _CHUNK_MAX_BYTES,
-        director_prompt: str | list[str] = ""
+        director_prompt: str | list[str] = "",
+        cancel_event: Event | None = None,
     ):
         self.client = genai.Client()  # GOOGLE_API_KEY or GEMINI_API_KEY env var
         self.output_dir = Path(output_dir)
@@ -37,6 +41,7 @@ class TTSPipeline:
         self.chunk_max_bytes = chunk_max_bytes
         self.director_prompt = director_prompt
         self.current_scene_index = 0
+        self.cancel_event = cancel_event
 
     # ------------------------------------------------------------------ #
     #  TSV I/O
@@ -111,17 +116,25 @@ class TTSPipeline:
 
         print(use_director_prompt)
 
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=f"""
+        contents = f"""
             {use_director_prompt}
 
             {text}
-            """,
-            config=types.GenerateContentConfig(
-                response_modalities=["AUDIO"],
-                speech_config=self._build_speech_config(),
-            ),
+            """
+        config = types.GenerateContentConfig(
+            response_modalities=["AUDIO"],
+            speech_config=self._build_speech_config(),
+        )
+
+        response = call_with_retry(
+            self.client.models.generate_content,
+            model=self.model,
+            contents=contents,
+            config=config,
+            max_retries=3,
+            base_delay=3.0,
+            retryable_exceptions=(GeminiServerError, ConnectionError, TimeoutError),
+            cancel_event=self.cancel_event,
         )
 
         data = response.candidates[0].content.parts[0].inline_data.data
@@ -155,6 +168,8 @@ class TTSPipeline:
         all_pcm = bytearray()
 
         for i, chunk in enumerate(chunks, 1):
+            if self.cancel_event and self.cancel_event.is_set():
+                raise PipelineCancelledError("Cancelled during TTS chunk generation")
             chars = sum(len(dl.line) for dl in chunk)
             print(f"    chunk {i}/{len(chunks)}  ({len(chunk)} 行 / {chars} 字)")
             pcm = self._generate_chunk(chunk)
@@ -169,6 +184,8 @@ class TTSPipeline:
         wav_files: list[Path] = []
 
         for i, tsv_path in enumerate(tsv_paths):
+            if self.cancel_event and self.cancel_event.is_set():
+                raise PipelineCancelledError("Cancelled during TTS scene loop")
             print(f"\n  音声生成: {tsv_path.name}")
             lines = self.read_tsv(tsv_path)
             if not lines:

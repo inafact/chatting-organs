@@ -2,10 +2,12 @@ import re
 from pathlib import Path
 from datetime import datetime
 from random import randrange
+from threading import Event
 
 from crewai import Agent, Crew, LLM, Process, Task
 
 from models import DialogueLine, SceneResult
+from retry_utils import PipelineCancelledError, call_with_retry
 
 DEFAULT_SCENE_INFO = {
     1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
@@ -30,7 +32,8 @@ class DialoguePipeline:
         output_dir: str = "outputs",
         model: str = "gpt-4o",
         temperature: float = 0.8,
-        render_scenes: dict = DEFAULT_SCENE_INFO
+        render_scenes: dict = DEFAULT_SCENE_INFO,
+        cancel_event: Event | None = None,
     ):
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
         self.output_dir = Path(f"{output_dir}/{datetime.now().isoformat("_").replace(":", "")}")
@@ -43,6 +46,7 @@ class DialoguePipeline:
 
         self.generated_scenes: list[str] = []
         self.render_scenes = render_scenes
+        self.cancel_event = cancel_event
 
         # --- Agents ---
         self.planner = Agent(
@@ -126,6 +130,7 @@ class DialoguePipeline:
             description=description,
             expected_output=f"シーン{scene_num}の具体的な制作指示書",
             agent=self.planner,
+            output_file=str(Path(self.output_dir, f"{scene_num}_task_for_{self.planner.role}.md"))
         )
 
     def _build_writer_task(self, scene_num: int, planner_task: Task) -> Task:
@@ -163,6 +168,7 @@ class DialoguePipeline:
             ),
             agent=self.writer,
             context=[planner_task],
+            output_file=str(Path(self.output_dir, f"{scene_num}_task_for_{self.writer.role}.md"))
         )
 
     def _build_translator_task(self, scene_num: int, writer_task: Task) -> Task:
@@ -191,6 +197,7 @@ class DialoguePipeline:
             ),
             agent=self.translator,
             context=[writer_task],
+            output_file=str(Path(self.output_dir, f"{scene_num}_task_for_{self.translator.role}.md"))
         )
 
     # ------------------------------------------------------------------ #
@@ -225,6 +232,9 @@ class DialoguePipeline:
         results: list[SceneResult] = []
 
         for scene_num in self.render_scenes:
+            if self.cancel_event and self.cancel_event.is_set():
+                raise PipelineCancelledError("Cancelled during dialogue generation")
+
             info = self.render_scenes[scene_num]
             print(f"  シーン {scene_num}/{len(self.render_scenes)} : {info['label']}")
 
@@ -240,7 +250,13 @@ class DialoguePipeline:
                 verbose=False,
             )
 
-            output = crew.kickoff()
+            output = call_with_retry(
+                crew.kickoff,
+                max_retries=2,
+                base_delay=5.0,
+                retryable_exceptions=(Exception,),
+                cancel_event=self.cancel_event,
+            )
 
             # writer の出力（日本語）は writer_task.output.raw から取得
             raw_ja = writer_task.output.raw
@@ -271,12 +287,8 @@ class DialoguePipeline:
             tsv_path = self._write_tsv(parsed, f"scene_{scene_num}.tsv")
             print(f"\n  -> {tsv_path}  ({len(parsed)} 行 / {char_count} 字)")
 
-        # combined
-        all_lines = [dl for r in results for dl in r.lines]
-        combined = self._write_tsv(all_lines, "all_scenes.tsv")
         total = sum(r.char_count for r in results)
         print(f"\n{'=' * 60}")
-        print(f"  統合 TSV : {combined}")
         print(f"  合計     : {sum(len(r.lines) for r in results)} 行 / {total} 字")
         print(f"{'=' * 60}")
 

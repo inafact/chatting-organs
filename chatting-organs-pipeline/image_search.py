@@ -1,12 +1,14 @@
 import random
 import warnings
 from pathlib import Path
+from threading import Event
 
 import torch
 from PIL import Image
 import open_clip
 
 from models import AlignedLine
+from retry_utils import PipelineCancelledError
 
 warnings.filterwarnings("ignore")
 
@@ -26,10 +28,12 @@ class ImageSearchPipeline:
         images_dir: str | Path = "images",
         model_name: str = "ViT-B-32",
         similarity_threshold: float = 0.2,
+        cancel_event: Event | None = None,
     ):
         self.output_dir = Path(output_dir)
         self.images_dir = Path(images_dir)
         self.similarity_threshold = similarity_threshold
+        self.cancel_event = cancel_event
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"[ImageSearch] デバイス: {self.device}")
@@ -157,6 +161,8 @@ class ImageSearchPipeline:
         result_paths: list[Path] = []
 
         for tsv_path in aligned_tsv_paths:
+            if self.cancel_event and self.cancel_event.is_set():
+                raise PipelineCancelledError("Cancelled during image search")
             print(f"\n  [ImageSearch] 処理中: {tsv_path.name}")
             lines = self.read_aligned_tsv(tsv_path)
 

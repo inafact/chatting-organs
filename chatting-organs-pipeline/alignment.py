@@ -1,10 +1,13 @@
 from pathlib import Path
 import wave
+from threading import Event
 
 from elevenlabs import ElevenLabs
+from elevenlabs.core.api_error import ApiError as ElevenLabsApiError
 
 from models import AlignedLine, DialogueLine
 from tts import TTSPipeline
+from retry_utils import PipelineCancelledError, call_with_retry
 
 class AlignmentPipeline:
     """WAV + TSV → ElevenLabs Forced Alignment → タイムスタンプ付き TSV
@@ -17,10 +20,12 @@ class AlignmentPipeline:
     def __init__(
         self,
         output_dir: str | Path,
-        api_key: str | None = None
+        api_key: str | None = None,
+        cancel_event: Event | None = None,
     ):
         self.client = ElevenLabs(api_key=api_key)  # ELEVENLABS_API_KEY env fallback
         self.output_dir = Path(output_dir)
+        self.cancel_event = cancel_event
 
     # ------------------------------------------------------------------ #
     #  Core: 1シーン分のアライメント
@@ -42,11 +47,20 @@ class AlignmentPipeline:
             pos += len(part) + 1  # +1 = "\n"
 
         # ElevenLabs Forced Alignment
-        with open(wav_path, "rb") as f:
-            result = self.client.forced_alignment.create(
-                file=f,
-                text=transcript,
-            )
+        def _do_alignment():
+            with open(wav_path, "rb") as f:
+                return self.client.forced_alignment.create(
+                    file=f,
+                    text=transcript,
+                )
+
+        result = call_with_retry(
+            _do_alignment,
+            max_retries=3,
+            base_delay=3.0,
+            retryable_exceptions=(ElevenLabsApiError, ConnectionError, TimeoutError),
+            cancel_event=self.cancel_event,
+        )
 
         # char_times = result.character_start_times_seconds
         char_times = result.characters
@@ -99,6 +113,9 @@ class AlignmentPipeline:
         result_paths: list[Path] = []
 
         for tsv_path in tsv_paths:
+            if self.cancel_event and self.cancel_event.is_set():
+                raise PipelineCancelledError("Cancelled during alignment")
+
             wav_path = wav_by_stem.get(tsv_path.stem)
             if wav_path is None:
                 print(f"  スキップ: {tsv_path.name} に対応する WAV なし")
