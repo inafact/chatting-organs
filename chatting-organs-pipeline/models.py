@@ -16,6 +16,10 @@ class AlignedLine(BaseModel):
     start_time: float  # seconds
     stem_file_path: str
     reference_image_path: str = ""
+    direction_sound: str = ""
+    direction_lighting: str = ""
+    direction_drone: str = ""
+    direction_catapult: str = ""
 
 
 class SceneResult(BaseModel):

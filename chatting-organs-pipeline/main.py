@@ -13,6 +13,7 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.udp_client import SimpleUDPClient
 
 from alignment import AlignmentPipeline
+from direction import DirectionPipeline
 from image_search import ImageSearchPipeline
 from pipeline import DialoguePipeline
 from tts import TTSPipeline
@@ -40,6 +41,10 @@ class PipelineManager:
       "images_dir": "images",
       "model_name": "ViT-B-32",
       "similarity_threshold": 0.2,
+    }
+    self.direction_config = {
+      "enabled": False,
+      "prompt_path": "direction_prompt_example.txt",
     }
     # -- TODO:
     self.voices_gemini = {
@@ -99,9 +104,13 @@ class PipelineManager:
       if "image_search" in data:
         print("loading [image_search]..")
         self.image_search_config.update(data["image_search"])
+      if "direction" in data:
+        print("loading [direction]..")
+        self.direction_config.update(data["direction"])
     print(self.render_scenes)
     print(self.directors_notes)
     print(self.image_search_config)
+    print(self.direction_config)
 
   def run_pipeline(self, client_address, address, *args):
     if self.pipeline_running:
@@ -229,13 +238,29 @@ class PipelineManager:
     if self.image_search_config.get("enabled", False):
       image_search = ImageSearchPipeline(
         output_dir=pipeline.output_dir,
-        images_dir=self.image_search_config.get("images_dir", "images"),
-        model_name=self.image_search_config.get("model_name", "ViT-B-32"),
-        similarity_threshold=self.image_search_config.get("similarity_threshold", 0.2),
+        images_dir=str(self.image_search_config.get("images_dir", "images")),
+        model_name=str(self.image_search_config.get("model_name", "ViT-B-32")),
+        similarity_threshold=float(self.image_search_config.get("similarity_threshold", 0.2)),
+        search_src=str(self.image_search_config.get("search_src", "line_en")),
         cancel_event=self._cancel_event,
       )
       aligned_tsvs = image_search.run(aligned_tsvs)
       print(f"\n画像検索完了: {len(aligned_tsvs)} ファイル")
+
+    #": " --- 5. 演出指示生成 (DirectionPipeline)": " ---
+    if self._cancel_event and self._cancel_event.is_set():
+      raise PipelineCancelledError("Cancelled before Direction")
+
+    if self.direction_config.get("enabled", False):
+      direction_pipeline = DirectionPipeline(
+        output_dir=pipeline.output_dir,
+        prompt_path=str(self.direction_config.get("prompt_path", "direction_prompt_example.txt")),
+        model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
+        cancel_event=self._cancel_event,
+      )
+      aligned_tsvs = direction_pipeline.run(aligned_tsvs)
+      print(f"\n演出指示生成完了: {len(aligned_tsvs)} ファイル")
+      print(f"@{datetime.now()}")
 
     ret_first_tsv = Path(aligned_tsvs[-1]).resolve()
     print(f"[PIPELINE FINISHED] @{datetime.now()}")

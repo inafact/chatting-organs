@@ -11,6 +11,7 @@ CrewAI-based pipeline for generating theatrical dialogue scripts, converting the
 3. **Audio generation**: Takes TSV → Gemini TTS (multi-speaker) → WAV files
 4. **Forced alignment**: Takes TSV + WAV → ElevenLabs Forced Alignment → タイムスタンプ付き TSV + per-turn WAV splits
 5. **Image search**: Takes aligned TSV + images/ → OpenCLIP semantic matching → 画像パス付き TSV
+6. **Direction generation**: Takes aligned TSV + `direction_prompt_example.txt` → CrewAI (演出家agent) → 演出指示付き TSV (音楽・照明・ドローン・カタパルト)
 
 ## Tech Stack
 
@@ -69,17 +70,19 @@ PLAYER_OSC_PORT=10001           # optional, player OSC target port
 ## Architecture
 
 ```
-main.py            OSC server + PipelineManager (orchestrates all 4 stages, background thread)
+main.py            OSC server + PipelineManager (orchestrates all 5 stages, background thread)
 pipeline.py        DialoguePipeline (CrewAI planner+writer+translator agents -> TSV)
 tts.py             TTSPipeline (TSV -> Gemini multi-speaker TTS -> WAV)
 alignment.py       AlignmentPipeline (WAV+TSV -> ElevenLabs Forced Alignment -> aligned TSV + split WAVs)
 image_search.py    ImageSearchPipeline (aligned TSV + images/ -> OpenCLIP semantic matching -> image-ref TSV)
+direction.py       DirectionPipeline (aligned TSV + direction prompt -> CrewAI director agent -> 演出指示付き TSV)
 retry_utils.py     call_with_retry (exponential backoff) + PipelineCancelledError
-models.py          Pydantic models: DialogueLine(+line_en), AlignedLine(+line_en, +reference_image_path), SceneResult
-app_config.toml    Runtime config: render_scenes + directors_notes + image_search
+models.py          Pydantic models: DialogueLine(+line_en), AlignedLine(+line_en, +reference_image_path, +direction_*), SceneResult
+app_config.toml    Runtime config: render_scenes + directors_notes + image_search + direction
 prompt_example.txt Input prompt (read at runtime)
+direction_prompt_example.txt Direction prompt (演出指示生成用プロンプト, read at runtime)
 images/            Curated image assets for semantic matching (jpg, png, etc.)
-outputs/<timestamp>/ Generated TSV + WAV files (gitignored)
+outputs/<timestamp>/ Generated TSV + WAV + direction CSV files (gitignored)
 ```
 
 ### Full Pipeline Flow
@@ -109,6 +112,11 @@ prompt_example.txt + app_config.toml
   ImageSearchPipeline -- OpenCLIP semantic image matching (line_en vs images/)
        |
   scene_N_aligned.tsv  -- speaker<TAB>line<TAB>line_en<TAB>start_time<TAB>stem_file_path<TAB>reference_image_path
+       |
+  DirectionPipeline -- CrewAI director agent (direction_prompt_example.txt + dialogue)
+       |
+  scene_N_direction.csv  -- CrewAI raw output (debug/reference)
+  scene_N_aligned.tsv    -- +direction_sound<TAB>direction_lighting<TAB>direction_drone<TAB>direction_catapult
 ```
 
 ### Key Constraints
@@ -122,12 +130,17 @@ prompt_example.txt + app_config.toml
 - ElevenLabs Forced Alignment does not support diarization → character offset mapping used
 - Per-turn WAV splitting based on aligned timestamps
 - Translator agent produces line-by-line English translations; line count mismatch handled gracefully (defaults to empty string)
-- TSV format: dialogue TSV is 3-column (`speaker\tline\tline_en`), aligned TSV is 5-column (`speaker\tline\tline_en\tstart_time\tstem_file_path`), image-ref TSV is 6-column (+ `reference_image_path`)
+- TSV format: dialogue TSV is 3-column (`speaker\tline\tline_en`), aligned TSV is 5-column (`speaker\tline\tline_en\tstart_time\tstem_file_path`), image-ref TSV is 6-column (+ `reference_image_path`), direction TSV is 10-column (+ `direction_sound\tdirection_lighting\tdirection_drone\tdirection_catapult`)
 - TTS/Alignment pipelines read `line_en` from TSV and pass it through; TTS uses only Japanese lines for audio generation
 - ImageSearchPipeline uses `line_en` (English translation) for cosine similarity against OpenCLIP image embeddings
 - Image search is configurable via `app_config.toml` (`[image_search]` section): `enabled`, `images_dir`, `model_name` (default ViT-B-32), `similarity_threshold` (default 0.25)
 - Supported image formats: jpg, png, gif, bmp, webp, tiff
 - When multiple images exceed the similarity threshold, one is randomly selected
+- Direction generation is configurable via `app_config.toml` (`[direction]` section): `enabled`, `prompt_path` (default `direction_prompt_example.txt`)
+- DirectionPipeline uses a single CrewAI "演出家" agent; LLM model shared with DialoguePipeline via `GEMINI_LLM_MODEL` env var
+- Direction CSV format: `[scene-line],[tag],[instruction],[param]` — tags are `sound`, `lighting`, `drone`, `catapult`
+- Direction values in TSV: `指示番号:パラメータ` semicolon-separated for multiple entries per line; empty string if no direction
+- Malformed CSV rows from LLM are skipped with warnings (graceful degradation)
 
 ### Error Handling & Cancellation
 
@@ -136,6 +149,7 @@ prompt_example.txt + app_config.toml
   - Gemini TTS (`tts.py`): `max_retries=3`, `base_delay=3.0s`, retries on `ServerError`/`ConnectionError`/`TimeoutError`
   - ElevenLabs (`alignment.py`): `max_retries=3`, `base_delay=3.0s`, retries on `ApiError`/`ConnectionError`/`TimeoutError`
   - CrewAI (`pipeline.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (CrewAI wraps errors variably)
+  - CrewAI (`direction.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (same as pipeline.py)
 - Cancellation via `threading.Event` passed to all pipeline constructors as `cancel_event`
   - Checked at: top of each scene/chunk loop, between pipeline stages in `main.py`
   - Retry backoff uses `cancel_event.wait(timeout=delay)` for instant cancellation during waits

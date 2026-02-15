@@ -28,11 +28,13 @@ class ImageSearchPipeline:
         images_dir: str | Path = "images",
         model_name: str = "ViT-B-32",
         similarity_threshold: float = 0.2,
+        search_src: str = "line_en",
         cancel_event: Event | None = None,
     ):
         self.output_dir = Path(output_dir)
         self.images_dir = Path(images_dir)
         self.similarity_threshold = similarity_threshold
+        self.search_src = search_src
         self.cancel_event = cancel_event
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -40,7 +42,9 @@ class ImageSearchPipeline:
         print(f"[ImageSearch] モデル読み込み中: {model_name}...")
 
         self.model, self.preprocess = open_clip.create_model_from_pretrained(
-            model_name, pretrained='openai', device=self.device
+            model_name,
+            pretrained=('openai' if model_name == "ViT-B-32" else "webli"),
+            device=self.device
         )
         self.tokenizer = open_clip.get_tokenizer(model_name)
         self.model.eval()
@@ -91,11 +95,11 @@ class ImageSearchPipeline:
     # ------------------------------------------------------------------ #
     #  テキスト → 画像マッチング
     # ------------------------------------------------------------------ #
-    def _find_matching_image(self, line_en: str) -> str:
-        if not line_en or self.image_features is None or len(self.image_paths) == 0:
+    def _find_matching_image(self, search_line: str) -> str:
+        if not search_line or self.image_features is None or len(self.image_paths) == 0:
             return ""
 
-        text_tokens = self.tokenizer([line_en]).to(self.device)
+        text_tokens = self.tokenizer([search_line]).to(self.device)
 
         with torch.no_grad():
             text_features = self.model.encode_text(text_tokens)
@@ -167,12 +171,36 @@ class ImageSearchPipeline:
             lines = self.read_aligned_tsv(tsv_path)
 
             for al in lines:
-                al.reference_image_path = self._find_matching_image(al.line_en)
+                al.reference_image_path = self._find_matching_image(al.line_en if self.search_src == "line_en" else al.line)
                 if al.reference_image_path:
-                    print(f"    {al.line_en[:40]}... -> {Path(al.reference_image_path).name}")
+                    print(f"    {al.line_en[:40] if self.search_src == "line_en" else al.line[:40]}... -> {Path(al.reference_image_path).name}")
 
             self._write_aligned_tsv(lines, tsv_path)
             result_paths.append(tsv_path)
             print(f"    -> {tsv_path}  ({len(lines)} 行, 6列)")
 
         return result_paths
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Image Search (OpenCLIP)")
+    parser.add_argument("dir", type=Path, help="*_aligned.tsv を含むディレクトリ")
+    parser.add_argument("--images-dir", type=str, default="images")
+    parser.add_argument("--model", type=str, default="ViT-B-32")
+    parser.add_argument("--threshold", type=float, default=0.25)
+    parser.add_argument("--search-src", type=str, default="line_en", choices=["line_en", "line"])
+    args = parser.parse_args()
+
+    aligned_tsvs = sorted(args.dir.glob("*_aligned.tsv"))
+
+    searcher = ImageSearchPipeline(
+        output_dir=args.dir,
+        images_dir=args.images_dir,
+        model_name=args.model,
+        similarity_threshold=args.threshold,
+        search_src=args.search_src,
+    )
+    result = searcher.run(aligned_tsvs)
+    print(f"\n完了: {len(result)} ファイル")

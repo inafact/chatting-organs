@@ -173,3 +173,20 @@ class AlignmentPipeline:
         #     print(f"\n  統合アライメント TSV: {combined}")
 
         return result_paths
+
+
+if __name__ == "__main__":
+    import argparse
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    parser = argparse.ArgumentParser(description="Forced Alignment (ElevenLabs)")
+    parser.add_argument("dir", type=Path, help="scene_*.tsv と scene_*.wav を含むディレクトリ")
+    args = parser.parse_args()
+
+    tsv_files = sorted(args.dir.glob("scene_*.tsv"))
+    wav_files = sorted(args.dir.glob("scene_*.wav"))
+
+    aligner = AlignmentPipeline(output_dir=args.dir)
+    result = aligner.run(tsv_files, wav_files)
+    print(f"\n完了: {len(result)} ファイル")
