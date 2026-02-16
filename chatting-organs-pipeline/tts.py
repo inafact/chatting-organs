@@ -12,8 +12,10 @@ from retry_utils import PipelineCancelledError, call_with_retry
 
 # 話者 → Gemini prebuilt voice のデフォルトマッピング
 DEFAULT_VOICES: dict[str, str] = {
-    "<ドローン>": "Kore",
-    "<カタパルト>": "Puck",
+    "<ドローン>": "Vindemiatrix",
+    # "<ドローン>": "Kore",
+    "<カタパルト>": "Zubenelgenubi",
+    # "<カタパルト>": "Puck",
 }
 
 # Gemini TTS 入力テキストのバイト上限（余裕を持たせた値）
@@ -213,3 +215,47 @@ class TTSPipeline:
             with wave.open(str(p), "rb") as wf:
                 all_pcm.extend(wf.readframes(wf.getnframes()))
         return self._save_wav(bytes(all_pcm), self.output_dir / filename)
+
+
+if __name__ == "__main__":
+    import argparse
+    from dotenv import load_dotenv
+    import os
+    import tomllib
+    load_dotenv()
+
+    parser = argparse.ArgumentParser(description="Text to Speech (Gemini)")
+    parser.add_argument("dir", type=Path, help="scene_*.tsvを含むディレクトリ")
+    # parser.add_argument("voices", default="Vindemiatrixw,Zubenelgenubi", type=str, help="voice")
+    args = parser.parse_args()
+
+    tsv_files = sorted(args.dir.glob("scene_*.tsv"))
+    # voices = args.voices.split(",")
+    model = os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts")
+    chunk_max_bytes = int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000))
+    main_localel = "ja"
+    dn = ""
+
+    with open("./app_config.toml", "rb") as f:
+      data = tomllib.load(f)
+      if "directors_notes" in data:
+        print("loading [directors_notes]..")
+        dn = data["directors_notes"]
+      if "main_locale" in data:
+        print("loading [main_locale]..")
+        main_locale = data["main_locale"]
+
+      tts = TTSPipeline(
+        output_dir=args.dir,
+        model=model,
+        # voices={
+        #   "<ドローン>": voices[0],
+        #   "<カタパルト>": voices[1]
+        # },
+        chunk_max_bytes=chunk_max_bytes,
+        main_locale=main_locale,
+        director_prompt=dn
+      )
+
+    result = tts.run(tsv_files)
+    print(f"\n完了: {len(result)} ファイル")
