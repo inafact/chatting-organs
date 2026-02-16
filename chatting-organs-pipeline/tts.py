@@ -30,6 +30,7 @@ class TTSPipeline:
         model: str = "gemini-2.5-flash-tts",
         chunk_max_bytes: int = _CHUNK_MAX_BYTES,
         director_prompt: str | list[str] = "",
+        main_locale: str = "ja",
         cancel_event: Event | None = None,
     ):
         self.client = genai.Client()  # GOOGLE_API_KEY or GEMINI_API_KEY env var
@@ -41,6 +42,7 @@ class TTSPipeline:
         self.chunk_max_bytes = chunk_max_bytes
         self.director_prompt = director_prompt
         self.current_scene_index = 0
+        self.main_locale = main_locale
         self.cancel_event = cancel_event
 
     # ------------------------------------------------------------------ #
@@ -108,7 +110,7 @@ class TTSPipeline:
 
     def _generate_chunk(self, chunk: list[DialogueLine]) -> bytes:
         """1チャンク分の音声を生成し、PCM bytes を返す"""
-        text = "\n".join(f"{dl.speaker}: {dl.line}" for dl in chunk)
+        text = "\n".join(f"{dl.speaker}: {dl.line if self.main_locale == "ja" else dl.line_en }" for dl in chunk)
 
         use_director_prompt = self.director_prompt
         if type(self.director_prompt) is list:

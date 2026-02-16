@@ -36,6 +36,7 @@ class PipelineManager:
     self.player_port = player_port
     self.directors_notes = []
     self.render_scenes = dict()
+    self.main_locale = "ja"
     self.image_search_config = {
       "enabled": False,
       "images_dir": "images",
@@ -96,6 +97,9 @@ class PipelineManager:
       if "directors_notes" in data:
         print("loading [directors_notes]..")
         self.directors_notes = data["directors_notes"]
+      if "main_locale" in data:
+        print("loading [main_locale]..")
+        self.main_locale = data["main_locale"]
       if "render_scenes" in data:
         print("loading [render_scenes]..")
         self.render_scenes = dict()
@@ -111,6 +115,7 @@ class PipelineManager:
     print(self.directors_notes)
     print(self.image_search_config)
     print(self.direction_config)
+    print(self.main_locale)
 
   def run_pipeline(self, client_address, address, *args):
     if self.pipeline_running:
@@ -205,6 +210,7 @@ class PipelineManager:
         model=os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts"),
         chunk_max_bytes=int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000)),
         director_prompt=self.directors_notes,
+        main_locale=self.main_locale,
         cancel_event=self._cancel_event,
     )
 
@@ -221,6 +227,7 @@ class PipelineManager:
     aligner = AlignmentPipeline(
       output_dir=pipeline.output_dir,
       api_key=os.getenv("ELEVENLABS_API_KEY", None),
+      main_locale=self.main_locale,
       cancel_event=self._cancel_event,
     )
 

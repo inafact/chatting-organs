@@ -21,10 +21,12 @@ class AlignmentPipeline:
         self,
         output_dir: str | Path,
         api_key: str | None = None,
+        main_locale: str = "ja",
         cancel_event: Event | None = None,
     ):
         self.client = ElevenLabs(api_key=api_key)  # ELEVENLABS_API_KEY env fallback
         self.output_dir = Path(output_dir)
+        self.main_locale = main_locale
         self.cancel_event = cancel_event
 
     # ------------------------------------------------------------------ #
@@ -36,7 +38,7 @@ class AlignmentPipeline:
         wav_path: Path,
     ) -> list[AlignedLine]:
         # セリフ本文だけを改行で連結（話者ラベルは入れない）
-        parts = [dl.line for dl in lines]
+        parts = [dl.line for dl in lines] if self.main_locale == "ja" else [dl.line_en for dl in lines]
         transcript = "\n".join(parts)
 
         # 各行の先頭文字が transcript 内の何文字目かを記録
