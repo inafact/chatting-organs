@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Text to Speech (Gemini)")
     parser.add_argument("dir", type=Path, help="scene_*.tsvを含むディレクトリ")
-    # parser.add_argument("voices", default="Vindemiatrixw,Zubenelgenubi", type=str, help="voice")
+    parser.add_argument("--voices", type=str, default="Vindemiatrixw,Zubenelgenubi")
     args = parser.parse_args()
 
     tsv_files = sorted(args.dir.glob("scene_*.tsv"))
@@ -235,6 +235,7 @@ if __name__ == "__main__":
     chunk_max_bytes = int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000))
     main_localel = "ja"
     dn = ""
+    result = []
 
     with open("./app_config.toml", "rb") as f:
       data = tomllib.load(f)
@@ -244,18 +245,21 @@ if __name__ == "__main__":
       if "main_locale" in data:
         print("loading [main_locale]..")
         main_locale = data["main_locale"]
+      print("loaded from app_config.yml..")
+      print(dn)
+      print(main_locale)
 
-      tts = TTSPipeline(
-        output_dir=args.dir,
-        model=model,
-        # voices={
-        #   "<ドローン>": voices[0],
-        #   "<カタパルト>": voices[1]
-        # },
-        chunk_max_bytes=chunk_max_bytes,
-        main_locale=main_locale,
-        director_prompt=dn
-      )
-
+    tts = TTSPipeline(
+      output_dir=args.dir,
+      model=model,
+      # voices={
+      #   "<ドローン>": voices[0],
+      #   "<カタパルト>": voices[1]
+      # },
+      chunk_max_bytes=chunk_max_bytes,
+      main_locale=main_locale,
+      director_prompt=dn
+    )
     result = tts.run(tsv_files)
+
     print(f"\n完了: {len(result)} ファイル")

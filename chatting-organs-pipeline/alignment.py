@@ -180,6 +180,7 @@ class AlignmentPipeline:
 if __name__ == "__main__":
     import argparse
     from dotenv import load_dotenv
+    import tomllib
     load_dotenv()
 
     parser = argparse.ArgumentParser(description="Forced Alignment (ElevenLabs)")
@@ -189,6 +190,18 @@ if __name__ == "__main__":
     tsv_files = sorted(args.dir.glob("scene_*.tsv"))
     wav_files = sorted(args.dir.glob("scene_*.wav"))
 
-    aligner = AlignmentPipeline(output_dir=args.dir)
+    with open("./app_config.toml", "rb") as f:
+      data = tomllib.load(f)
+      if "main_locale" in data:
+        print("loading [main_locale]..")
+        main_locale = data["main_locale"]
+      print("loaded from app_config.yml..")
+      print(main_locale)
+
+    aligner = AlignmentPipeline(
+      output_dir=args.dir,
+      main_locale=args.main_locale
+    )
     result = aligner.run(tsv_files, wav_files)
+
     print(f"\n完了: {len(result)} ファイル")
