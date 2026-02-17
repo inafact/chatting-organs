@@ -230,7 +230,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tsv_files = sorted(args.dir.glob("scene_*.tsv"))
-    # voices = args.voices.split(",")
     model = os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts")
     chunk_max_bytes = int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000))
     main_localel = "ja"
@@ -252,10 +251,6 @@ if __name__ == "__main__":
     tts = TTSPipeline(
       output_dir=args.dir,
       model=model,
-      # voices={
-      #   "<ドローン>": voices[0],
-      #   "<カタパルト>": voices[1]
-      # },
       chunk_max_bytes=chunk_max_bytes,
       main_locale=main_locale,
       director_prompt=dn

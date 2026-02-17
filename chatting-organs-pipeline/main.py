@@ -263,6 +263,7 @@ class PipelineManager:
         output_dir=pipeline.output_dir,
         prompt_path=str(self.direction_config.get("prompt_path", "direction_prompt_example.txt")),
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
+        scenes_info=self.render_scenes,
         cancel_event=self._cancel_event,
       )
       aligned_tsvs = direction_pipeline.run(aligned_tsvs)

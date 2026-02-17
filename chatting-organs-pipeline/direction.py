@@ -1,5 +1,6 @@
 import re
 import logging
+import json
 from pathlib import Path
 from threading import Event
 
@@ -21,11 +22,13 @@ class DirectionPipeline:
         output_dir: str | Path,
         prompt_path: str | Path = "direction_prompt_example.txt",
         model: str = "gpt-4o",
+        scenes_info: dict = dict(),
         cancel_event: Event | None = None,
     ):
         self.output_dir = Path(output_dir)
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
         self.cancel_event = cancel_event
+        self.scenes_info = scenes_info
 
         self.llm = LLM(model=model, max_completion_tokens=16000)
 
@@ -160,13 +163,13 @@ class DirectionPipeline:
         for idx, tag_map in directions.items():
             al = lines[idx]
             if "sound" in tag_map:
-                al.direction_sound = ";".join(tag_map["sound"])
+                al.direction_sound = " ".join(tag_map["sound"])
             if "lighting" in tag_map:
-                al.direction_lighting = ";".join(tag_map["lighting"])
+                al.direction_lighting = " ".join(tag_map["lighting"])
             if "drone" in tag_map:
-                al.direction_drone = ";".join(tag_map["drone"])
+                al.direction_drone = " ".join(tag_map["drone"])
             if "catapult" in tag_map:
-                al.direction_catapult = ";".join(tag_map["catapult"])
+                al.direction_catapult = " ".join(tag_map["catapult"])
 
     # ------------------------------------------------------------------ #
     #  TSV I/O
@@ -196,16 +199,26 @@ class DirectionPipeline:
         return lines
 
     @staticmethod
-    def _write_aligned_tsv(aligned: list[AlignedLine], path: Path) -> Path:
+    def _write_aligned_tsv(aligned: list[AlignedLine], path: Path, info: dict | None = None) -> Path:
         with open(path, "w", encoding="utf-8") as f:
-            for al in aligned:
-                f.write(
-                    f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
-                    f"\t{al.stem_file_path}\t{al.reference_image_path}"
-                    f"\t{al.direction_sound}\t{al.direction_lighting}"
-                    f"\t{al.direction_drone}\t{al.direction_catapult}\n"
-                )
-        return path
+          for i, al in enumerate(aligned):
+            if type(info) is dict and "options" in info and i == 0:
+              print("..add extra column for scene config")
+              f.write(
+                f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
+                f"\t{al.stem_file_path}\t{al.reference_image_path}"
+                f"\t{al.direction_sound}\t{al.direction_lighting}"
+                f"\t{al.direction_drone}\t{al.direction_catapult}"
+                f"\t{json.dumps(info["options"])}\n"
+              )
+            else:
+              f.write(
+                f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
+                f"\t{al.stem_file_path}\t{al.reference_image_path}"
+                f"\t{al.direction_sound}\t{al.direction_lighting}"
+                f"\t{al.direction_drone}\t{al.direction_catapult}\n"
+              )
+          return path
 
     # ------------------------------------------------------------------ #
     #  Run
@@ -221,7 +234,6 @@ class DirectionPipeline:
             scene_num = self._extract_scene_number(tsv_path)
             lines = self.read_aligned_tsv(tsv_path)
             print(f"\n  [Direction] 処理中: {tsv_path.name} (シーン{scene_num}, {len(lines)}行)")
-
             direction_task = self._build_direction_task(scene_num, lines)
 
             crew = Crew(
@@ -243,7 +255,10 @@ class DirectionPipeline:
             csv_text = output.raw
             directions = self._parse_direction_csv(csv_text, scene_num, len(lines))
             self._merge_directions(lines, directions)
-            self._write_aligned_tsv(lines, tsv_path)
+            if len(self.scenes_info) > 0 and str(scene_num) in self.scenes_info:
+              self._write_aligned_tsv(lines, tsv_path, self.scenes_info[str(scene_num)])
+            else:
+              self._write_aligned_tsv(lines, tsv_path)
             result_paths.append(tsv_path)
             print(f"    -> {tsv_path}  ({len(lines)} 行, 10列)")
 
@@ -252,19 +267,31 @@ class DirectionPipeline:
 
 if __name__ == "__main__":
     import argparse
+    from dotenv import load_dotenv
+    import os
+    import tomllib
+    load_dotenv()
 
     parser = argparse.ArgumentParser(description="Direction Pipeline (CrewAI)")
     parser.add_argument("dir", type=Path, help="*_aligned.tsv を含むディレクトリ")
     parser.add_argument("--prompt", type=str, default="direction_prompt_example.txt")
-    parser.add_argument("--model", type=str, default="gpt-4o")
     args = parser.parse_args()
+
+    with open("./app_config.toml", "rb") as f:
+      data = tomllib.load(f)
+      if "render_scenes" in data:
+        print("loading [render_scenes]..")
+        scenes_info = data["render_scenes"]
+      print("loaded from app_config.yml..")
+      print(scenes_info)
 
     aligned_tsvs = sorted(args.dir.glob("*_aligned.tsv"))
 
     dp = DirectionPipeline(
         output_dir=args.dir,
         prompt_path=args.prompt,
-        model=args.model,
+        model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
+        scenes_info=scenes_info
     )
     result = dp.run(aligned_tsvs)
     print(f"\n完了: {len(result)} ファイル")
