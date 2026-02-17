@@ -132,7 +132,7 @@ class PipelineManager:
     elif len(args) > 1:
       voices = list(args)
     else:
-      voices = ["Kore", "Enceladus"]
+      voices = ["Vindemiatrix", "Zubenelgenubi"]
 
     self._reply_client = client_address
     self._cancel_event = threading.Event()

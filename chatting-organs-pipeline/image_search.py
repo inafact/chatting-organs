@@ -21,6 +21,7 @@ class ImageSearchPipeline:
     """
 
     SUPPORTED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'}
+    CHOICE_MODE = ["RANDOM", "RANDOM_N", "TOP", "TOP_N"]
 
     def __init__(
         self,
@@ -36,6 +37,8 @@ class ImageSearchPipeline:
         self.similarity_threshold = similarity_threshold
         self.search_src = search_src
         self.cancel_event = cancel_event
+        self.choice_mode = "TOP"
+        self.choice_size = 1
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"[ImageSearch] デバイス: {self.device}")
@@ -118,9 +121,21 @@ class ImageSearchPipeline:
             if s >= self.similarity_threshold
         ]
 
+        print("-"*10)
+        print(search_line)
+        print(matches)
+
         if matches:
-            selected = random.choice(matches)
-            return str(selected.resolve())
+          if self.choice_mode == "TOP":
+            selected = matches[0:1]
+          elif self.CHOICE_MODE == "TOP_N":
+            selected = matches[0:self.choice_size]
+          elif self.CHOICE_MODE == "RANDOM_N":
+            selected = random.sample(matches, k=self.choice_size)
+          else:
+            selected = [random.choice(matches)]
+
+          return ",".join(map(lambda s: str(s.resolve()), selected))
 
         return ""
 

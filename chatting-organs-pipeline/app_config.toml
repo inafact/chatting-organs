@@ -1,4 +1,5 @@
 main_locale = "en"
+# main_locale = "ja"
 
 directors_notes = [
   '''
@@ -24,15 +25,22 @@ directors_notes = [
     - 興奮した調子で、早いペースで話してください。
     - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
     ''',
+   # '''
+   #  - 平坦な調子で感情表現を極力抑え、普通のペースで話してください。
+   #  '''
   '''
-    - 平坦な調子で感情表現を極力抑え、普通のペースで話してください。
+    ### DIRECTOR'S NOTES
+
+    Pacing: Speaks at an calm pace, without emotion
     '''
 ]
 
 [render_scenes]
 # 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300 }
 # 2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 400 }
-# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 500 }
+# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 400 }
+# 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 400 }
+
 #
 # 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 1000 }
 # 2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 2000 }
@@ -51,5 +59,6 @@ enabled = true
 images_dir = "images"
 model_name = "ViT-B-32"
 # model_name = "ViT-SO400M-16-SigLIP2-384"
-similarity_threshold = 0.255
+similarity_threshold = 0.245
 search_src = "line_en"
+# search_src = "line"

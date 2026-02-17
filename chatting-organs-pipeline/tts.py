@@ -13,9 +13,9 @@ from retry_utils import PipelineCancelledError, call_with_retry
 # 話者 → Gemini prebuilt voice のデフォルトマッピング
 DEFAULT_VOICES: dict[str, str] = {
     "<ドローン>": "Vindemiatrix",
-    # "<ドローン>": "Kore",
     "<カタパルト>": "Zubenelgenubi",
     # "<カタパルト>": "Puck",
+    # "<ドローン>": "Kore",
 }
 
 # Gemini TTS 入力テキストのバイト上限（余裕を持たせた値）
