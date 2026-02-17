@@ -48,11 +48,11 @@ directors_notes = [
 # 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 2000 }
 # 5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 500 }
 #
-1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800 }
-2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1800 }
+1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800, "options" = { "tempo" = 1.75 } }
+2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1800, "options" = { "tempo" = 1 } }
 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2000 }
-4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800 }
-5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350 }
+4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "tempo" = 0.15 }}
+5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350, "options" = { "camera" = false, "image" = false, "tempo" = 0.75 } }
 
 [image_search]
 enabled = true
