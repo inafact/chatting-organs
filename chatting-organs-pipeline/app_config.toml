@@ -49,9 +49,10 @@ directors_notes = [
 
 [image_search]
 enabled = true
-images_dir = "images"
+# images_dir = "images"
+images_dir = { 1 = "_data/シーン1", 2 = "_data/シーン2",  3 = "_data/シーン3", 4 = "_data/シーン4" }
 model_name = "ViT-B-32"
-similarity_threshold = 0.245
+similarity_threshold = 0.24
 search_src = "line_en"
 # search_src = "line"
 

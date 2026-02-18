@@ -7,7 +7,7 @@ from elevenlabs.core.api_error import ApiError as ElevenLabsApiError
 
 from models import AlignedLine, DialogueLine
 from tts import TTSPipeline
-from retry_utils import PipelineCancelledError, call_with_retry
+from pipeline_utils import PipelineCancelledError, call_with_retry
 
 class AlignmentPipeline:
     """WAV + TSV → ElevenLabs Forced Alignment → タイムスタンプ付き TSV

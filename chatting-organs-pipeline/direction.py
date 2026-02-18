@@ -7,7 +7,7 @@ from threading import Event
 from crewai import Agent, Crew, LLM, Process, Task
 
 from models import AlignedLine
-from retry_utils import PipelineCancelledError, call_with_retry
+from pipeline_utils import PipelineCancelledError, call_with_retry, extract_scene_number
 
 logger = logging.getLogger(__name__)
 
@@ -46,16 +46,6 @@ class DirectionPipeline:
             llm=self.llm,
             verbose=False,
         )
-
-    # ------------------------------------------------------------------ #
-    #  Helpers
-    # ------------------------------------------------------------------ #
-    @staticmethod
-    def _extract_scene_number(tsv_path: Path) -> int:
-        m = re.search(r"scene_(\d+)", tsv_path.stem)
-        if m:
-            return int(m.group(1))
-        raise ValueError(f"Cannot extract scene number from {tsv_path.name}")
 
     # ------------------------------------------------------------------ #
     #  Task builder
@@ -204,24 +194,24 @@ class DirectionPipeline:
     @staticmethod
     def _write_aligned_tsv(aligned: list[AlignedLine], path: Path, info: dict | None = None) -> Path:
         with open(path, "w", encoding="utf-8") as f:
-          for i, al in enumerate(aligned):
-            if type(info) is dict and "options" in info and i == 0:
-              print("..add extra column for scene config")
-              f.write(
-                f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
-                f"\t{al.stem_file_path}\t{al.reference_image_path}"
-                f"\t{al.direction_sound}\t{al.direction_lighting}"
-                f"\t{al.direction_drone}\t{al.direction_catapult}"
-                f"\t{json.dumps(info["options"])}\n"
-              )
-            else:
-              f.write(
-                f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
-                f"\t{al.stem_file_path}\t{al.reference_image_path}"
-                f"\t{al.direction_sound}\t{al.direction_lighting}"
-                f"\t{al.direction_drone}\t{al.direction_catapult}\n"
-              )
-          return path
+            for i, al in enumerate(aligned):
+                if type(info) is dict and "options" in info and i == 0:
+                    print("..add extra column for scene config")
+                    f.write(
+                        f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
+                        f"\t{al.stem_file_path}\t{al.reference_image_path}"
+                        f"\t{al.direction_sound}\t{al.direction_lighting}"
+                        f"\t{al.direction_drone}\t{al.direction_catapult}"
+                        f"\t{json.dumps(info["options"])}\n"
+                    )
+                else:
+                    f.write(
+                        f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
+                        f"\t{al.stem_file_path}\t{al.reference_image_path}"
+                        f"\t{al.direction_sound}\t{al.direction_lighting}"
+                        f"\t{al.direction_drone}\t{al.direction_catapult}\n"
+                    )
+            return path
 
     # ------------------------------------------------------------------ #
     #  Run
@@ -234,7 +224,7 @@ class DirectionPipeline:
             if self.cancel_event and self.cancel_event.is_set():
                 raise PipelineCancelledError("Cancelled during direction generation")
 
-            scene_num = self._extract_scene_number(tsv_path)
+            scene_num = extract_scene_number(tsv_path)
             lines = self.read_aligned_tsv(tsv_path)
             print(f"\n  [Direction] 処理中: {tsv_path.name} (シーン{scene_num}, {len(lines)}行)")
             direction_task = self._build_direction_task(scene_num, lines)
@@ -280,21 +270,23 @@ if __name__ == "__main__":
     parser.add_argument("--prompt", type=str, default="direction_prompt_example.txt")
     args = parser.parse_args()
 
+    scenes_info = dict()
+
     with open("./app_config.toml", "rb") as f:
-      data = tomllib.load(f)
-      if "render_scenes" in data:
-        print("loading [render_scenes]..")
-        scenes_info = data["render_scenes"]
-      print("loaded from app_config.yml..")
-      print(scenes_info)
+        data = tomllib.load(f)
+        if "render_scenes" in data:
+            print("loading [render_scenes]..")
+            scenes_info.update(data["render_scenes"])
+        print("loaded from app_config.yml..")
+        print(scenes_info)
 
     aligned_tsvs = sorted(args.dir.glob("*_aligned.tsv"))
 
-    dp = DirectionPipeline(
+    direction = DirectionPipeline(
         output_dir=args.dir,
         prompt_path=args.prompt,
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         scenes_info=scenes_info
     )
-    result = dp.run(aligned_tsvs)
+    result = direction.run(aligned_tsvs)
     print(f"\n完了: {len(result)} ファイル")

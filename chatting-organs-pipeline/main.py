@@ -17,7 +17,7 @@ from direction import DirectionPipeline
 from image_search import ImageSearchPipeline
 from pipeline import DialoguePipeline
 from tts import TTSPipeline
-from retry_utils import PipelineCancelledError
+from pipeline_utils import PipelineCancelledError
 
 load_dotenv()
 
@@ -34,20 +34,23 @@ class PipelineManager:
     self._reply_client = None
     self.player_address = player_address
     self.player_port = player_port
-    self.directors_notes = []
-    self.render_scenes = dict()
     self.main_locale = "ja"
+    # -- TODO:
+    self.render_scenes = dict()
+    self.directors_notes = []
+    # --
     self.image_search_config = {
       "enabled": False,
       "images_dir": "images",
       "model_name": "ViT-B-32",
-      "similarity_threshold": 0.2,
+      "similarity_threshold": 0.245,
+      "search_src": "line_en"
     }
     self.direction_config = {
       "enabled": False,
       "prompt_path": "direction_prompt_example.txt",
     }
-    # -- TODO:
+    # -- TODO: move into tts.py
     self.voices_gemini = {
       "Zephyr": "Bright"
       , "Puck": "Upbeat"
@@ -118,10 +121,10 @@ class PipelineManager:
         print("loading [render_scenes]..")
         self.render_scenes = dict()
         # -- NOTE: tomllib might convert int-based keys into to str-based keys
-        for k, el in enumerate(data["render_scenes"]):
-          self.render_scenes[int(el)] = data["render_scenes"][el]
+        self.render_scenes.update(data["render_scenes"])
       if "image_search" in data:
         print("loading [image_search]..")
+        # -- NOTE: tomllib might convert int-based keys into to str-based keys
         self.image_search_config.update(data["image_search"])
       if "direction" in data:
         print("loading [direction]..")
@@ -193,11 +196,6 @@ class PipelineManager:
       SimpleUDPClient(client_address[0], 12001).send_message("/reply", 0)
 
   def _run_pipeline(self, voices = ["Vindemiatrix", "Zubenelgenubi"]) -> list:
-    if len(voices) < 2:
-      print("error")
-      return []
-
-    print(f"use voices: {voices[0]}, {voices[1]}")
     print(f"[PIPELINE STARTED] @{datetime.now()}")
 
     #": " --- 1. セリフ生成 (CrewAI + Gemini or OpenAI)": " ---
@@ -222,10 +220,7 @@ class PipelineManager:
 
     tts = TTSPipeline(
         output_dir=pipeline.output_dir,
-        voices={
-          "<ドローン>": voices[0],
-          "<カタパルト>": voices[1]
-        },
+        voices={ "<ドローン>": voices[0], "<カタパルト>": voices[1] },
         model=os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts"),
         chunk_max_bytes=int(os.getenv("GEMINI_TTS_MAX_CHUNK_BYTES", 5000)),
         director_prompt=self.directors_notes,
@@ -264,10 +259,11 @@ class PipelineManager:
     if self.image_search_config.get("enabled", False):
       image_search = ImageSearchPipeline(
         output_dir=pipeline.output_dir,
-        images_dir=str(self.image_search_config.get("images_dir", "images")),
+        images_dir=self.image_search_config.get("images_dir", "images"),
         model_name=str(self.image_search_config.get("model_name", "ViT-B-32")),
         similarity_threshold=float(self.image_search_config.get("similarity_threshold", 0.2)),
         search_src=str(self.image_search_config.get("search_src", "line_en")),
+        scenes_info=self.render_scenes,
         cancel_event=self._cancel_event,
       )
       aligned_tsvs = image_search.run(aligned_tsvs)

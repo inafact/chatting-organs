@@ -8,10 +8,9 @@ from PIL import Image
 import open_clip
 
 from models import AlignedLine
-from retry_utils import PipelineCancelledError
+from pipeline_utils import PipelineCancelledError, extract_scene_number
 
 warnings.filterwarnings("ignore")
-
 
 class ImageSearchPipeline:
     """Aligned TSV + images/ → OpenCLIP image search → 6-column TSV
@@ -26,19 +25,21 @@ class ImageSearchPipeline:
     def __init__(
         self,
         output_dir: str | Path,
-        images_dir: str | Path = "images",
+        images_dir: str | dict[int, str] | dict[str, str] = "images",
         model_name: str = "ViT-B-32",
         similarity_threshold: float = 0.2,
         search_src: str = "line_en",
+        scenes_info: dict = dict(),
         cancel_event: Event | None = None,
     ):
         self.output_dir = Path(output_dir)
-        self.images_dir = Path(images_dir)
+        self.images_dir = images_dir
         self.similarity_threshold = similarity_threshold
         self.search_src = search_src
         self.cancel_event = cancel_event
         self.choice_mode = "TOP"
         self.choice_size = 1
+        self.scenes_info = scenes_info
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"[ImageSearch] デバイス: {self.device}")
@@ -52,24 +53,28 @@ class ImageSearchPipeline:
         self.tokenizer = open_clip.get_tokenizer(model_name)
         self.model.eval()
 
-        self.image_features, self.image_paths = self._encode_all_images()
-        print(f"[ImageSearch] 準備完了 (画像 {len(self.image_paths)} 枚)")
+        # --
+        if type(self.images_dir) == str:
+            self.image_features, self.image_paths = self._encode_all_images(self.images_dir)
+            print(f"[ImageSearch] 準備完了 (画像 {len(self.image_paths)} 枚)")
 
     # ------------------------------------------------------------------ #
     #  画像の事前エンコード
     # ------------------------------------------------------------------ #
-    def _encode_all_images(self) -> tuple[torch.Tensor | None, list[Path]]:
-        if not self.images_dir.exists():
-            print(f"[ImageSearch] 画像ディレクトリが見つかりません: {self.images_dir}")
+    def _encode_all_images(self, dir_paths: str) -> tuple[torch.Tensor | None, list[Path]]:
+        _path = Path(dir_paths)
+
+        if not _path.exists():
+            print(f"[ImageSearch] 画像ディレクトリが見つかりません: {_path}")
             return None, []
 
         image_files = sorted(
-            f for f in self.images_dir.iterdir()
+            f for f in _path.iterdir()
             if f.is_file() and f.suffix.lower() in self.SUPPORTED_EXTENSIONS
         )
 
         if not image_files:
-            print(f"[ImageSearch] 画像ファイルが見つかりません: {self.images_dir}")
+            print(f"[ImageSearch] 画像ファイルが見つかりません: {_path}")
             return None, []
 
         valid_images = []
@@ -98,6 +103,9 @@ class ImageSearchPipeline:
     # ------------------------------------------------------------------ #
     #  テキスト → 画像マッチング
     # ------------------------------------------------------------------ #
+    #
+    # - TODO: improve
+    #
     def _find_matching_image(self, search_line: str) -> str:
         if not search_line or self.image_features is None or len(self.image_paths) == 0:
             return ""
@@ -123,7 +131,7 @@ class ImageSearchPipeline:
 
         print("-"*10)
         print(search_line)
-        print(matches)
+        print(matches[:3])
 
         if matches:
           if self.choice_mode == "TOP":
@@ -182,11 +190,25 @@ class ImageSearchPipeline:
         for tsv_path in aligned_tsv_paths:
             if self.cancel_event and self.cancel_event.is_set():
                 raise PipelineCancelledError("Cancelled during image search")
+
+            scene_num = extract_scene_number(tsv_path)
+
+            if type(self.images_dir) == dict:
+                print("-- dict mode --")
+                if str(scene_num) in self.images_dir:
+                    self.image_features, self.image_paths = self._encode_all_images(self.images_dir[str(scene_num)])
+                    print(f"[ImageSearch] 準備完了 (画像 {len(self.image_paths)} 枚)")
+                else:
+                    self.image_features, self.image_paths = [None, []]
+                    print("-- no reference (dict mode) --")
+
             print(f"\n  [ImageSearch] 処理中: {tsv_path.name}")
             lines = self.read_aligned_tsv(tsv_path)
 
             for al in lines:
-                al.reference_image_path = self._find_matching_image(al.line_en if self.search_src == "line_en" else al.line)
+                al.reference_image_path = self._find_matching_image(
+                    al.line_en if self.search_src == "line_en" else al.line
+                )
                 if al.reference_image_path:
                     print(f"    {al.line_en[:40] if self.search_src == "line_en" else al.line[:40]}... -> {Path(al.reference_image_path).name}")
 
@@ -199,23 +221,49 @@ class ImageSearchPipeline:
 
 if __name__ == "__main__":
     import argparse
+    from dotenv import load_dotenv
+    import os
+    import tomllib
+    load_dotenv()
+
+    image_search: dict = {
+      "images_dir": "images",
+      "model_name": "ViT-B-32",
+      "similarity_threshold": 0.245,
+      "search_src": "line_en"
+    }
+    scenes_info = dict()
+
+    with open("./app_config.toml", "rb") as f:
+        data = tomllib.load(f)
+        if "render_scenes" in data:
+            print("loading [render_scenes]..")
+            scenes_info.update(data["render_scenes"])
+        if "image_search" in data:
+            print("loading [image_search]..")
+            image_search.update(data["image_search"])
+        print("loaded from app_config.yml..")
+        print(scenes_info)
+        print(image_search)
 
     parser = argparse.ArgumentParser(description="Image Search (OpenCLIP)")
     parser.add_argument("dir", type=Path, help="*_aligned.tsv を含むディレクトリ")
-    parser.add_argument("--images-dir", type=str, default="images")
-    parser.add_argument("--model", type=str, default="ViT-B-32")
-    parser.add_argument("--threshold", type=float, default=0.25)
-    parser.add_argument("--search-src", type=str, default="line_en", choices=["line_en", "line"])
+    if type(image_search["images_dir"]) == str:
+        parser.add_argument("--images-dir", type=str, default=image_search["images_dir"])
+    parser.add_argument("--model", type=str, default=image_search["model_name"])
+    parser.add_argument("--threshold", type=float, default=image_search["similarity_threshold"])
+    parser.add_argument("--search-src", type=str, default=image_search["search_src"], choices=["line_en", "line"])
     args = parser.parse_args()
 
     aligned_tsvs = sorted(args.dir.glob("*_aligned.tsv"))
 
     searcher = ImageSearchPipeline(
         output_dir=args.dir,
-        images_dir=args.images_dir,
+        images_dir=image_search["images_dir"] if type(image_search["images_dir"]) == dict else args.images_dir,
         model_name=args.model,
         similarity_threshold=args.threshold,
         search_src=args.search_src,
+        scenes_info=scenes_info,
     )
     result = searcher.run(aligned_tsvs)
     print(f"\n完了: {len(result)} ファイル")

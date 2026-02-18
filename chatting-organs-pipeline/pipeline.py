@@ -8,7 +8,7 @@ from threading import Event
 from crewai import Agent, Crew, LLM, Process, Task
 
 from models import DialogueLine, SceneResult
-from retry_utils import PipelineCancelledError, call_with_retry
+from pipeline_utils import PipelineCancelledError, call_with_retry
 
 DEFAULT_SCENE_INFO = {
     1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },

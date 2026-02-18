@@ -1,6 +1,8 @@
+import re
 import time
 import logging
 from threading import Event
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +45,10 @@ def call_with_retry(
             else:
                 time.sleep(delay)
     raise last_exception
+
+
+def extract_scene_number(tsv_path: Path) -> int:
+  m = re.search(r"scene_(\d+)", tsv_path.stem)
+  if m:
+    return int(m.group(1))
+  raise ValueError(f"Cannot extract scene number from {tsv_path.name}")

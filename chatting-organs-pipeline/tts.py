@@ -8,7 +8,7 @@ from google.genai import types
 from google.genai.errors import ServerError as GeminiServerError
 
 from models import DialogueLine
-from retry_utils import PipelineCancelledError, call_with_retry
+from pipeline_utils import PipelineCancelledError, call_with_retry
 
 # 話者 → Gemini prebuilt voice のデフォルトマッピング
 DEFAULT_VOICES: dict[str, str] = {
@@ -46,6 +46,7 @@ class TTSPipeline:
         self.current_scene_index = 0
         self.main_locale = main_locale
         self.cancel_event = cancel_event
+        print(f"TTS uses voices: {self.voices}")
 
     # ------------------------------------------------------------------ #
     #  TSV I/O
