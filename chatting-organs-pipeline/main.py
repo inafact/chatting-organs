@@ -88,11 +88,25 @@ class PipelineManager:
     SimpleUDPClient(client_address[0], 12001).send_message("/reply", 2)
 
   def reload_configs(self, client_address, address, *args):
-    self._reload_configs()
-    SimpleUDPClient(client_address[0], 12001).send_message("/reply", 3)
+    if len(args) == 1:
+      ret = self._reload_configs(args[0])
+    else:
+      ret = self._reload_configs()
+    SimpleUDPClient(client_address[0], 12001).send_message("/reply", ret)
 
-  def _reload_configs(self):
-    with open("./app_config.toml", "rb") as f:
+  def _reload_configs(self, config_file: str | Path = "./app_config.toml") -> int:
+    if type(config_file) is Path:
+      if not config_file.exists():
+        return - 1
+    else:
+      try:
+        cf = Path(config_file)
+        if not cf.exists():
+          return -1
+      except TypeError as e:
+        return -1
+
+    with open(str(config_file), "rb") as f:
       data = tomllib.load(f)
       if "directors_notes" in data:
         print("loading [directors_notes]..")
@@ -103,6 +117,7 @@ class PipelineManager:
       if "render_scenes" in data:
         print("loading [render_scenes]..")
         self.render_scenes = dict()
+        # -- NOTE: tomllib might convert int-based keys into to str-based keys
         for k, el in enumerate(data["render_scenes"]):
           self.render_scenes[int(el)] = data["render_scenes"][el]
       if "image_search" in data:
@@ -117,11 +132,9 @@ class PipelineManager:
     print(self.direction_config)
     print(self.main_locale)
 
-  def run_pipeline(self, client_address, address, *args):
-    if self.pipeline_running:
-      print("pipeline is running..")
-      return
+    return 3
 
+  def run_pipeline(self, client_address, address, *args):
     if len(args) == 1:
       voices = [
         args[0],
@@ -133,6 +146,11 @@ class PipelineManager:
       voices = list(args)
     else:
       voices = ["Vindemiatrix", "Zubenelgenubi"]
+
+    # -- TODO:
+    if self.pipeline_running:
+      print("pipeline is running..")
+      return
 
     self._reply_client = client_address
     self._cancel_event = threading.Event()
@@ -148,11 +166,13 @@ class PipelineManager:
   def _run_pipeline_thread(self, voices):
     """バックグラウンドスレッドで実行。エラー・キャンセルを捕捉する。"""
     try:
+      # -- TODO:
       paths = self._run_pipeline(voices)
       SimpleUDPClient(self.player_address, self.player_port).send_message(
         "/load_files", paths
       )
       SimpleUDPClient(self._reply_client[0], 12001).send_message("/reply", 1)
+      # --
     except PipelineCancelledError:
       print(f"[PIPELINE CANCELLED] @{datetime.now()}")
       SimpleUDPClient(self._reply_client[0], 12001).send_message("/reply", -2)
@@ -172,7 +192,7 @@ class PipelineManager:
       print("No pipeline running to cancel")
       SimpleUDPClient(client_address[0], 12001).send_message("/reply", 0)
 
-  def _run_pipeline(self, voices = ["Kore",  "Enceladus"]) -> list:
+  def _run_pipeline(self, voices = ["Vindemiatrix", "Zubenelgenubi"]) -> list:
     if len(voices) < 2:
       print("error")
       return []
@@ -180,11 +200,10 @@ class PipelineManager:
     print(f"use voices: {voices[0]}, {voices[1]}")
     print(f"[PIPELINE STARTED] @{datetime.now()}")
 
-    #": " --- 1. セリフ生成 (CrewAI + OpenAI)": " ---
+    #": " --- 1. セリフ生成 (CrewAI + Gemini or OpenAI)": " ---
     pipeline = DialoguePipeline(
         prompt_path="prompt_example.txt",
         # output_dir="output",
-        # model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         temperature=float(os.getenv("TEMPERATURE", "0.8")),
         render_scenes=self.render_scenes,

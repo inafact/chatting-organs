@@ -138,6 +138,7 @@ class AlignmentPipeline:
               for i, al in enumerate(aligned):
                 frame_start = min(int(sr * elapsed), wf.getnframes())
                 wf.setpos(frame_start)
+                # -- TODO:
                 if i == 0:
                   ioffset = al.start_time
                 else:
@@ -151,7 +152,7 @@ class AlignmentPipeline:
                   aligned[i - 1].stem_file_path = str(stem_file_path.absolute())
                   elapsed = elapsed + diff_t
 
-              # one more
+              # one more for the last turn
               frame_start = min(int(sr * elapsed), wf.getnframes())
               wf.setpos(frame_start)
               numframes = wf.getnframes() - frame_start

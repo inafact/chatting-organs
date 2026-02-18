@@ -1,3 +1,4 @@
+from unittest.mock import DEFAULT
 import re
 from pathlib import Path
 from datetime import datetime
@@ -11,13 +12,12 @@ from retry_utils import PipelineCancelledError, call_with_retry
 
 DEFAULT_SCENE_INFO = {
     1: {"label": "導入", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
-    2: {"label": "登場人物紹介", "setting": "ロシアによって占拠されたウクライナの地域", "length": 1000 },
+    2: {"label": "登場人物紹介、来歴詳述", "setting": "ロシアによって占拠されたウクライナの地域", "length": 1000 },
     3: {"label": "対立の明確化と概念の深化", "setting": "沖縄アメリカ軍基地前", "length": 1000 },
-    4: {"label": "激論と分断・決裂", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
-    5: {"label": "エピローグ", "setting": "生成AIサービスプロンプト実行後の画面", "length": 1000 }
+    4: {"label": "激論と分断、決裂、カタルシスとしての暴力可視化", "setting": "東京・丸の内アートセンター「BUG」", "length": 1000 },
+    5: {"label": "システム・フィードバックとしての終幕", "setting": "生成AIサービスプロンプト実行後の画面", "length": 1000 }
 }
 
-# speaker名として許容するパターン
 _SPEAKER_RE = re.compile(
     r"^\s*\**\s*(<ドローン>|<カタパルト>)\s*\**\s*[：:]\s*(.+)", re.DOTALL
 )
@@ -45,7 +45,9 @@ class DialoguePipeline:
         # --
 
         self.generated_scenes: list[str] = []
+        # self.render_scenes = DEFAULT_SCENE_INFO | render_scenes
         self.render_scenes = render_scenes
+
         self.cancel_event = cancel_event
 
         # --- Agents ---
@@ -66,7 +68,7 @@ class DialoguePipeline:
 
         self.writer = Agent(
             role="演劇脚本家",
-            goal="指示書に従い、ドローンとカタパルトによる約8,000字の対話劇セリフを生成する",
+            goal="指示書に従い、ドローンとカタパルトによる合計約8000字の対話劇セリフを生成する",
             backstory=(
                 "現代思想・政治哲学・軍事技術に精通した演劇脚本家。"
                 "ユク・ホイ、スティグレール、ンベンベ、バルファキス、シャマユー、"
@@ -165,7 +167,7 @@ class DialoguePipeline:
             expected_output=(
                 f"シーン{scene_num}の対話セリフ約{use_scene_length}字。"
                 "全行が「<ドローン>：」か「<カタパルト>：」で始まる。"
-                "「…」と句読点・感嘆符のみで構成されるセリフは出力しない。"
+                "「…」と句読点・感嘆符のみで構成されるセリフは生成しない。"
             ),
             agent=self.writer,
             context=[planner_task],
@@ -195,7 +197,7 @@ class DialoguePipeline:
             expected_output=(
                 f"シーン{scene_num}の全セリフの英語翻訳。"
                 "全行が「<ドローン>：」か「<カタパルト>：」で始まる。"
-                "「…」と句読点・感嘆符のみで構成されるセリフは出力しない。"
+                "「…」と句読点・感嘆符のみで構成されるセリフは生成しない。"
                 "行数・順序は原文と一致。"
             ),
             agent=self.translator,
@@ -233,6 +235,9 @@ class DialoguePipeline:
     # ------------------------------------------------------------------ #
     def run(self) -> list[SceneResult]:
         results: list[SceneResult] = []
+
+        # -- DEBUG
+        # return results
 
         for scene_num in self.render_scenes:
             if self.cancel_event and self.cancel_event.is_set():

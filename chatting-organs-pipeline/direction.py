@@ -11,7 +11,9 @@ from retry_utils import PipelineCancelledError, call_with_retry
 
 logger = logging.getLogger(__name__)
 
-VALID_TAGS = {"sound", "lighting", "drone", "catapult"}
+VALID_TAGS = {
+  "/sound", "/lighting", "/drone", "/catapult"
+}
 
 
 class DirectionPipeline:
@@ -152,6 +154,7 @@ class DirectionPipeline:
             if tag not in directions[idx]:
                 directions[idx][tag] = []
 
+            # -- TODO: mulitple commands at once
             entry = f"{instruction}:{param}" if param else instruction
             directions[idx][tag].append(entry)
 
@@ -162,14 +165,14 @@ class DirectionPipeline:
         """Merge parsed directions into AlignedLine objects in-place."""
         for idx, tag_map in directions.items():
             al = lines[idx]
-            if "sound" in tag_map:
-                al.direction_sound = " ".join(tag_map["sound"])
-            if "lighting" in tag_map:
-                al.direction_lighting = " ".join(tag_map["lighting"])
-            if "drone" in tag_map:
-                al.direction_drone = " ".join(tag_map["drone"])
-            if "catapult" in tag_map:
-                al.direction_catapult = " ".join(tag_map["catapult"])
+            if "/sound" in tag_map:
+                al.direction_sound = " ".join(tag_map["/sound"])
+            if "/lighting" in tag_map:
+                al.direction_lighting = " ".join(tag_map["/lighting"])
+            if "/drone" in tag_map:
+                al.direction_drone = " ".join(tag_map["/drone"])
+            if "/catapult" in tag_map:
+                al.direction_catapult = " ".join(tag_map["/catapult"])
 
     # ------------------------------------------------------------------ #
     #  TSV I/O

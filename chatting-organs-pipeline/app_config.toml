@@ -36,29 +36,24 @@ directors_notes = [
 ]
 
 [render_scenes]
-# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300 }
-# 2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 400 }
-# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 400 }
-# 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 400 }
-
-#
-# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 1000 }
-# 2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 2000 }
-# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2500 }
-# 4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 2000 }
-# 5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 500 }
-#
-1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800, "options" = { "tempo" = 1.75 } }
-2 = { "label"= "登場人物紹介", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1800, "options" = { "tempo" = 1 } }
+# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300, "options" = { "tempo" = 1.5 } }
+# 2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 400 }
+# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 400, "options" = { "camera" = false, "tempo" = 1 } }
+# 4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800 }
+##
+1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800, "options" = { "tempo" = 1.5 } }
+2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1800 }
 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2000 }
-4 = { "label"= "激論と分断・決裂", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "tempo" = 0.15 }}
-5 = { "label"= "エピローグ", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350, "options" = { "camera" = false, "image" = false, "tempo" = 0.75 } }
+4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "tempo" = 0.1 } }
+5 = { "label"= "システム・フィードバックとしての終幕", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350, "options" = { "camera" = false, "tempo" = 0.5 } }
 
 [image_search]
 enabled = true
 images_dir = "images"
 model_name = "ViT-B-32"
-# model_name = "ViT-SO400M-16-SigLIP2-384"
 similarity_threshold = 0.245
 search_src = "line_en"
 # search_src = "line"
+
+[direction]
+enabled = true
