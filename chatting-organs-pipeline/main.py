@@ -22,18 +22,18 @@ from pipeline_utils import PipelineCancelledError
 load_dotenv()
 
 ip = os.environ.get("OSC_RECV_HOST", "0.0.0.0")
-port = int(os.environ.get("OSC_RECV_PORT", '12000'))
+port = int(os.environ.get("OSC_RECV_PORT", '10000'))
 dispatcher = Dispatcher()
 
 
 class PipelineManager:
-  def __init__(self, player_address: str = "0.0.0.0", player_port: int = 10001):
+  def __init__(self, td_player_address: str = "0.0.0.0", td_player_port: int = 10001):
     self.pipeline_running = False
     self._cancel_event: threading.Event | None = None
     self._pipeline_thread: threading.Thread | None = None
     self._reply_client = None
-    self.player_address = player_address
-    self.player_port = player_port
+    self.td_player_address = td_player_address
+    self.td_player_port = td_player_port
     self.main_locale = "ja"
     # -- TODO:
     self.render_scenes = dict()
@@ -171,7 +171,7 @@ class PipelineManager:
     try:
       # -- TODO:
       paths = self._run_pipeline(voices)
-      SimpleUDPClient(self.player_address, self.player_port).send_message(
+      SimpleUDPClient(self.td_player_address, self.td_player_port).send_message(
         "/load_files", paths
       )
       SimpleUDPClient(self._reply_client[0], 12001).send_message("/reply", 1)
@@ -295,8 +295,8 @@ class PipelineManager:
 # ======================
 
 manager = PipelineManager(
-  player_address = os.getenv("PLAYER_OSC_ADDR", "127.0.0.1"),
-  player_port = int(os.getenv("PLAYER_OSC_PORT", 10001))
+  td_player_address = os.getenv("PLAYER_OSC_ADDR", "127.0.0.1"),
+  td_player_port = int(os.getenv("PLAYER_OSC_PORT", 10001))
 )
 
 dispatcher.map("/run_pipeline", manager.run_pipeline, needs_reply_address=True)
