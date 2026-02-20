@@ -12,7 +12,8 @@ from pipeline_utils import PipelineCancelledError, call_with_retry, extract_scen
 logger = logging.getLogger(__name__)
 
 VALID_TAGS = {
-  "/sound", "/lighting", "/drone", "/catapult"
+    "sound", "lighting", "drone", "catapult",
+    "/sound", "/lighting", "/drone", "/catapult"
 }
 
 
@@ -145,7 +146,7 @@ class DirectionPipeline:
                 directions[idx][tag] = []
 
             # -- TODO: mulitple commands at once
-            entry = f"{instruction}:{param}" if param else instruction
+            entry = f"{instruction} {param}" if param else instruction
             directions[idx][tag].append(entry)
 
         return directions

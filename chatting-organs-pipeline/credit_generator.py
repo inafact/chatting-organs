@@ -40,7 +40,7 @@ class CreditGenerator:
         logger.info(f"Wrote {len(rows)} rows to {output_path}")
         return output_path
 
-    ROWS_PER_TABLE = 25
+    ROWS_PER_TABLE = 18
 
     def _build_html(self, rows: list[tuple[str, str]]) -> str:
         chunks = [rows[i:i + self.ROWS_PER_TABLE] for i in range(0, len(rows), self.ROWS_PER_TABLE)]
@@ -67,7 +67,7 @@ class CreditGenerator:
      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,200;1,300;1,400&family=M+PLUS+Rounded+1c&family=Noto+Sans+TC:wght@100..900&display=swap"
      rel="stylesheet">
   <style>
-    body {{ font-family: "M PLUS Rounded 1c", sans-serif; padding: 0; margin: 0; background: #000; color: #fff; font-size: calc(5vh * 0.3) }}
+    body {{ font-family: "M PLUS Rounded 1c", sans-serif; padding: 0; margin: 0; background: #000; color: #fff; font-size: calc(5vh * 0.5) }}
     table {{ border-collapse: collapse; width: 100%; margin: 2.5rem 0; display: none; }}
     td {{ padding: 0.5em 1em; vertical-align: top; text-align: center; width: 50%; }}
   </style>
