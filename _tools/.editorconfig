@@ -1,0 +1,5 @@
+# http://editorconfig.org
+root = true
+
+[*.scd]
+indent_size = 4
