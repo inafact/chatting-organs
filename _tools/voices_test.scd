@@ -9,6 +9,7 @@ ServerOptions.devices.do({| dev |
 
 (
 // Server.default.options.device = "ASIO : MOTU Gen 5";
+// Server.default.options.device = "ASIO : Komplete Audio 6";
 Server.default.options.device = "ASIO : Roland Rubix";
 Server.default.options.numOutputBusChannels = 4;
 Server.default.options.sampleRate = 48000;
@@ -33,6 +34,7 @@ Spec.add(\busindex, ControlSpec(0, 511, step: 1));
 Spec.add(\ioindex, ControlSpec(0, Server.default.options.numInputBusChannels - 1, step: 1));
 Spec.add(\pps, ControlSpec(0, 60, \lin));
 Spec.add(\loopgate, ControlSpec(-10, 10, \lin));
+Spec.add(\loop, ControlSpec(0, 1, step: 1));
 Spec.add(\startPos, \unipolar);
 Spec.add(\endPos, \unipolar);
 Spec.add(\widerate, ControlSpec(-100, 100, \lin));
@@ -45,11 +47,10 @@ Server.local.waitForBoot.do({
     var wh = 280;
 
 	var default_sf = Array();
-	// default_sf = File.readAllString(Document.current.dir ++ "/config.json").parseJSON.at("soundfiles");
-
     var privateBusIndex = Server.default.options.numOutputBusChannels + Server.default.options.numInputBusChannels + 32;
     var submixIndex = privateBusIndex + 50;
-	// ObjectTable.put(\default_buf, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
+	ObjectTable.put(\mono_drone, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
+	ObjectTable.put(\mono_catapult, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
 	/*
 		default_sf.do({|path, pathidx|
         filer = filer ++ SoundFile.collect(path);
@@ -78,7 +79,6 @@ Server.local.waitForBoot.do({
         if(dir.at(self.soundfile.path.asSymbol).at(\buffered) == 1, {
             ">>" ++ dir.at(self.soundfile.path.asSymbol).at(\bufnum).postln;
         });
-
     });
 
     //
@@ -164,17 +164,16 @@ Server.local.waitForBoot.do({
         Ndef(("r1p"++(i+1)).asSymbol).set(\bufnum, dir.at(filer.at(i).path.asSymbol).at(\bufnum), \amp, 0);
 		});
 	*/
-    ObjectTable.put(\oneshot_buf, 2);
-    ObjectTable.at(\oneshot_buf);
 
-	// Ndef(\vdiskin).ar(2);
-	// Ndef(\vdiskin, { | rate = 1, loop = 1, pan = 0 |
-	// 	VDiskIn.ar(2, ObjectTable.at(\default_buf).bufnum, rate, loop)
-	// });
-	// Ndef(\vdiskin).play();
+	Ndef(\drone, { | rate = 0.5, loop = 0, pan = -1, amp = 0.5 |
+		Pan2.ar(VDiskIn.ar(1, ObjectTable.at(\mono_drone).bufnum, rate, loop) * amp, pan);
+	});
+	Ndef(\catapult, { | rate = 0.5, loop = 0, pan = 1, amp = 0.5 |
+		Pan2.ar(VDiskIn.ar(1, ObjectTable.at(\mono_catapult).bufnum, rate, loop) * amp, pan);
+	});
 
-	Ndef(\bufrd).ar(2);
-	Ndef(\bufrd, { |amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0, baseFreq = 100 |
+	Ndef(\bufrd1).ar(2);
+	Ndef(\bufrd1, { |amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0, baseFreq = 100 |
 		var bo, po, freq, hasFreq;
 		bo = BufRd.ar(
 			2, bufnum,
@@ -186,18 +185,43 @@ Server.local.waitForBoot.do({
 		// Pan2.ar(po * amp * VarLag.kr(preamp, 0.5) * gain, pan);
 		bo * amp * VarLag.kr(preamp, 0.5) * gain;
     });
-	// Ndef(\bufrd).play();
+
+	Ndef(\bufrd2).ar(2);
+	Ndef(\bufrd2, { |amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0, baseFreq = 100 |
+		var bo, po, freq, hasFreq;
+		bo = BufRd.ar(
+			2, bufnum,
+            Phasor.ar(0, BufRateScale.kr(bufnum) * widerate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
+            1, 4
+        );
+		// # freq, hasFreq = Pitch.kr(bo, ampThreshold: 0.02, median: 1);
+		// po = PitchShift.ar(bo, 0.1, (baseFreq / freq), 0.0, 0.0);
+		// Pan2.ar(po * amp * VarLag.kr(preamp, 0.5) * gain, pan);
+		bo * amp * VarLag.kr(preamp, 0.5) * gain;
+    });
 
 });
-);
-
 
 OSCdef(\r1, {
 	|msg, time, addr, recvPort|
 
 	msg.postln;
+}, '/sound', nil, 12200);
 
-}, '/sound', nil, 12000);
+OSCdef(\r2, {
+	|msg, time, addr, recvPort|
+
+	msg.postln;
+
+	if(msg[1] == "<ドローン>", {
+		"dd".postln;
+		// ObjectTable.at(\mono_drone).cueSoundFile(msg[2], 0);
+	}, {
+		"cc".postln;
+		// ObjectTable.at(\mono_catapult).cueSoundFile(msg[2], 0);
+	});
+}, '/voice', nil, 12200);
+);
 
 NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs);
 NetAddr("127.0.0.1", 10000).sendMsg(\reload_env);

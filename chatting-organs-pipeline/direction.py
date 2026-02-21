@@ -70,7 +70,7 @@ class DirectionPipeline:
 【出力ルール】
 ・各行の形式: [セリフID],[演出要素タグ],[演出指示番号],[パラメータ]
 ・セリフIDは「{scene_num}-行番号」形式（例: {scene_num}-1, {scene_num}-2, ...）
-・演出要素タグは sound, lighting, drone, catapult のいずれか
+・演出要素タグは /sound, /lighting, /drone, /catapult のいずれか
 ・パラメータは音楽切替エフェクト番号やドローン動作秒数など（不要なら空）
 ・演出不要な行はCSVに含めない
 ・CSVヘッダー行は不要、データ行のみ出力
