@@ -40,145 +40,103 @@ Spec.add(\endPos, \unipolar);
 Spec.add(\widerate, ControlSpec(-100, 100, \lin));
 Spec.add(\prescale, ControlSpec(0, 50, \lin));
 
+// ObjectTable.put(\mono_drone, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
+// ObjectTable.put(\mono_catapult, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
+
 Server.local.waitForBoot.do({
-    var filer = Array();
-    var dir, win, sfview, btn, lview, fn, info, sender, layout;
-    var ww = 1080;
-    var wh = 280;
+	var createWin;
 
-	var default_sf = Array();
-    var privateBusIndex = Server.default.options.numOutputBusChannels + Server.default.options.numInputBusChannels + 32;
-    var submixIndex = privateBusIndex + 50;
-	ObjectTable.put(\mono_drone, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
-	ObjectTable.put(\mono_catapult, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
-	/*
-		default_sf.do({|path, pathidx|
-        filer = filer ++ SoundFile.collect(path);
+	createWin = { | wid = "audio", path = nil |
+		var filer = Array();
+		var dir, win, sfview, btn, lview, fn, info, sender, layout;
+		var ww = 820;
+		var wh = 240;
+
+		var default_sf = Array();
+		if (path.notNil, {
+			filer = filer ++ SoundFile.collect(path);
 		});
-	*/
-	filer = filer ++ SoundFile.collect(Document.current.dir ++ "/_audio/*");
-    dir = IdentityDictionary.new;
-    win = Window("files", Rect(0, 0, ww, wh))
-    .onClose_({
-        "close".postln;
-        dir.do({|el|
-            ("free: " ++ el.at(\bufnum)).postln;
-            Server.default.sendMsg("/b_free", el.at(\bufnum));
-            filer.at(el.at(\index)).close;
-        });
-		// ("free: " ++ ObjectTable.at(\default_buf).bufnum).postln;
-		// Server.default.sendMsg("/b_free", ObjectTable.at(\default_buf).bufnum);
-    })
-    .front;
-    win.addFlowLayout;
+		dir = IdentityDictionary.new;
+		win = Window(wid, Rect(0, 0, ww, wh))
+		.onClose_({
+			"close".postln;
+			dir.do({|el|
+				("free: " ++ el.at(\bufnum)).postln;
+				Server.default.sendMsg("/b_free", el.at(\bufnum));
+				filer.at(el.at(\index)).close;
+			});
+			// ("free: " ++ ObjectTable.at(\default_buf).bufnum).postln;
+			// Server.default.sendMsg("/b_free", ObjectTable.at(\default_buf).bufnum);
+		})
+		.front;
+		win.addFlowLayout;
 
-    //
-    sfview = SoundFileView(win, 440@wh)
-    .mouseUpAction_({|self|
-        self.selections[self.currentSelection].postln;
-        if(dir.at(self.soundfile.path.asSymbol).at(\buffered) == 1, {
-            ">>" ++ dir.at(self.soundfile.path.asSymbol).at(\bufnum).postln;
-        });
-    });
-
-    //
-    fn = {|target, toggle|
-        var bn = nil;
-        var sf = nil;
-        dir.at(target.asSymbol).put(\buffered, toggle);
-        //
-		///*
-        if(dir.at(target.asSymbol).at(\buffered) == 1, {
-            sf = filer.at(dir.at(target.asSymbol).at(\index));
-            sf.postln;
-            sf.openRead(sf.path);
-            dir.at(target.asSymbol).put(\bufnum, sf.asBuffer(Server.local).bufnum);
-            dir.at(target.asSymbol).postln;
-        }, {
-            "to free".postln;
-            dir.at(target.asSymbol).postln;
-        });
-		//*/
-    };
-
-    filer.do({|el, i|
-        dir.put(el.path.asSymbol, (index:i, buffered: 0));
-        fn.value(el.path, 1);
-    });
-
-	if (filer.size > 0, {
-		sfview.soundfile = filer.at(0);
-		sfview.read(0, filer.at(0).numFrames);
-	}, {
-		"no files".postln;
-	});
-
-    //
-    lview = ListView(win, 300@wh)
-    .items_(filer.collect({ |el| el.path }))
-    .selectionMode_(\extended)
-    .action_({|index|
-        filer.collect({|el| el.path}).at(index.value).postln;
-        sfview.soundfile = filer.at(index.value);
-        sfview.read(0, filer.at(index.value).numFrames);
-        sfview.refresh;
-		// ObjectTable.at(\default_buf).cueSoundFile(filer.collect({|el| el.path}).at(index.value), 0);
-		/*
-			btn.value = dir.at(filer.at(index.value).path.asSymbol).at('buffered');
-			info.value = dir.at(filer.at(index.value).path.asSymbol);
-		*/
-    });
-
-    /*
-		layout = VLayoutView(win, 300@wh);
-		btn = Button(layout, 300@30)
-		.states_([
-        ["use buffer", Color.black, Color.red],
-        ["buffered", Color.red, Color.white],
-		])
-		.action_({|self|
-        var sf = nil;
-        self.value.postln;
-        fn.value(lview.items.at(lview.value), self.value);
+		//
+		sfview = SoundFileView(win, 500@wh)
+		.mouseUpAction_({|self|
+			self.selections[self.currentSelection].postln;
+			// if(dir.at(self.soundfile.path.asSymbol).at(\buffered) == 1, {
+			// 	">>" ++ dir.at(self.soundfile.path.asSymbol).at(\bufnum).postln;
+			// });
 		});
-		info = EZText(layout, 300@40, "info:", {|ez| ez.postln;}, ["-"], true);
-		sender = EZText(layout, 300@40, "sendTo:", {|ez|
-        dir.at(lview.items.at(lview.value).asSymbol).at(\bufnum).postln;
-        ObjectTable.put(\oneshot_buf, dir.at(lview.items.at(lview.value).asSymbol).at(\bufnum));
-        ez.value.postln;
-		}, ["-"], true);
-	*/
 
-	/*
-		4.do({| i |
-        //
-        Ndef(("r1p"++(i+1)).asSymbol, {|amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0|
-		var bo = BufRd.ar(
-		1, bufnum,
-		Phasor.ar(0, BufRateScale.kr(bufnum) * widerate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
-		1, 4
-		);
-		Pan2.ar(bo * amp * VarLag.kr(preamp, 0.5) * gain, pan);
-        });
-        Ndef(("r1p"++(i+1)).asSymbol).play(privateBusIndex);
-        Ndef(("r1p"++(i+1)).asSymbol).set(\bufnum, dir.at(filer.at(i).path.asSymbol).at(\bufnum), \amp, 0);
+		//
+		fn = {|target, toggle|
+			var bn = nil;
+			var sf = nil;
+			dir.at(target.asSymbol).put(\buffered, toggle);
+			if(dir.at(target.asSymbol).at(\buffered) == 1, {
+				sf = filer.at(dir.at(target.asSymbol).at(\index));
+				sf.postln;
+				sf.openRead(sf.path);
+				dir.at(target.asSymbol).put(\bufnum, sf.asBuffer(Server.local).bufnum);
+				dir.at(target.asSymbol).postln;
+			}, {
+				"to free".postln;
+				dir.at(target.asSymbol).postln;
+			});
+		};
+
+		filer.do({|el, i|
+			dir.put(el.path.asSymbol, (index:i, buffered: 0));
+			fn.value(el.path, 1);
 		});
-	*/
 
-	Ndef(\drone, { | rate = 0.5, loop = 0, pan = -1, amp = 0.5 |
-		Pan2.ar(VDiskIn.ar(1, ObjectTable.at(\mono_drone).bufnum, rate, loop) * amp, pan);
-	});
-	Ndef(\catapult, { | rate = 0.5, loop = 0, pan = 1, amp = 0.5 |
-		Pan2.ar(VDiskIn.ar(1, ObjectTable.at(\mono_catapult).bufnum, rate, loop) * amp, pan);
-	});
+		if (filer.size > 0, {
+			sfview.soundfile = filer.at(0);
+			sfview.read(0, filer.at(0).numFrames);
+		}, {
+			"no files".postln;
+		});
+
+		lview = ListView(win, 300@wh)
+		.items_(filer.collect({ |el| el.path }))
+		.selectionMode_(\extended)
+		.action_({|index|
+			filer.collect({|el| el.path}).at(index.value).postln;
+			sfview.soundfile = filer.at(index.value);
+			sfview.read(0, filer.at(index.value).numFrames);
+			sfview.refresh;
+		});
+	};
+
+	createWin.value("/sound", Document.current.dir ++ "/_audio/*");
+	createWin.value("/voice");
+
+	// Ndef(\drone, { | rate = 0.5, loop = 0, pan = -1, amp = 0.5 |
+	// 	Pan2.ar(PlayBuf.ar(1, ObjectTable.at(\mono_drone).bufnum, rate, loop: loop) * amp, pan);
+	// });
+	// Ndef(\catapult, { | rate = 0.5, loop = 0, pan = 1, amp = 0.5 |
+	// 	Pan2.ar(PlayBuf.ar(1, ObjectTable.at(\mono_catapult).bufnum, rate, loop: loop) * amp, pan);
+	// });
 
 	Ndef(\bufrd1).ar(2);
-	Ndef(\bufrd1, { |amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0, baseFreq = 100 |
+	Ndef(\bufrd1, { |amp = 0.5, bufnum = 0, rate = 1, loop = 1, startPos = 0, endPos = 1, gain = 1, preamp = 1, baseFreq = 100 |
 		var bo, po, freq, hasFreq;
 		bo = BufRd.ar(
 			2, bufnum,
-            Phasor.ar(0, BufRateScale.kr(bufnum) * widerate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
-            1, 4
+            Phasor.ar(0, BufRateScale.kr(bufnum) * rate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
+            loop, 4
         );
 		// # freq, hasFreq = Pitch.kr(bo, ampThreshold: 0.02, median: 1);
 		// po = PitchShift.ar(bo, 0.1, (baseFreq / freq), 0.0, 0.0);
@@ -187,39 +145,63 @@ Server.local.waitForBoot.do({
     });
 
 	Ndef(\bufrd2).ar(2);
-	Ndef(\bufrd2, { |amp = 0.5, bufnum = 0, widerate = 1, startPos = 0, endPos = 1,  gain = 1, preamp = 1, pan = 0, baseFreq = 100 |
+	Ndef(\bufrd2, { |amp = 0.5, bufnum = 0, rate = 1, loop = 1, startPos = 0, endPos = 1, gain = 1, preamp = 1, baseFreq = 100 |
 		var bo, po, freq, hasFreq;
 		bo = BufRd.ar(
 			2, bufnum,
-            Phasor.ar(0, BufRateScale.kr(bufnum) * widerate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
-            1, 4
+            Phasor.ar(0, BufRateScale.kr(bufnum) * rate, BufFrames.kr(bufnum) * startPos, BufFrames.kr(bufnum) * endPos),
+            loop, 4
         );
 		// # freq, hasFreq = Pitch.kr(bo, ampThreshold: 0.02, median: 1);
 		// po = PitchShift.ar(bo, 0.1, (baseFreq / freq), 0.0, 0.0);
 		// Pan2.ar(po * amp * VarLag.kr(preamp, 0.5) * gain, pan);
 		bo * amp * VarLag.kr(preamp, 0.5) * gain;
     });
-
 });
+
+ObjectTable.put(\lastq, 0);
 
 OSCdef(\r1, {
 	|msg, time, addr, recvPort|
+	var targetPrev, targetNext, st, bnum, fd = 0;
 
-	msg.postln;
+	"/sound".post; msg.postln;
+
+	if (ObjectTable.at(\last1) % 2 == 0, {
+		targetPrev = "bufrd1";
+		targetNext = "bufrd2";
+	}, {
+		targetPrev = "bufrd2";
+		targetNext = "bufrd1";
+	});
+
+	st = msg[1].split($ );
+
+	bnum = (st.at(0).asInteger - 1).clip(0, 100);
+
+	if (st.size > 1, {
+		fd = st.at(1).asInteger;
+		Ndef(targetPrev.asSymbol).fadeTime = fd / 1000;
+		Ndef(targetNext.asSymbol).fadeTime = fd / 1000;
+	}, {
+		Ndef(targetPrev.asSymbol).fadeTime = 0;
+		Ndef(targetNext.asSymbol).fadeTime = 0;
+	});
+
+	Ndef(targetPrev.asSymbol).xset(\amp, 0);
+	Ndef(targetNext.asSymbol).set(\bufnum, bnum);
+	Ndef(targetNext.asSymbol).xset(\amp, 1);
+
+	ObjectTable.put(\last1, ObjectTable.at(\lastq) + 1);
 }, '/sound', nil, 12200);
 
 OSCdef(\r2, {
 	|msg, time, addr, recvPort|
 
-	msg.postln;
-
-	if(msg[1] == "<ドローン>", {
-		"dd".postln;
-		// ObjectTable.at(\mono_drone).cueSoundFile(msg[2], 0);
-	}, {
-		"cc".postln;
-		// ObjectTable.at(\mono_catapult).cueSoundFile(msg[2], 0);
-	});
+	"/voice".post; msg.postln;
+	// if(msg[1] == "<ドローン>", {
+	// }, {
+	// });
 }, '/voice', nil, 12200);
 );
 
