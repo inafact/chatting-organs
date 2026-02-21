@@ -175,14 +175,19 @@ OSCdef(\r1, {
 		targetNext = "bufrd1";
 	});
 
-	st = msg[1].split($ );
+	st = msg[1].asString.split($ );
 
 	bnum = (st.at(0).asInteger - 1).clip(0, 100);
 
 	if (st.size > 1, {
 		fd = st.at(1).asInteger;
-		Ndef(targetPrev.asSymbol).fadeTime = fd / 1000;
-		Ndef(targetNext.asSymbol).fadeTime = fd / 1000;
+		if (fd == 1, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		}, {
+			Ndef(targetPrev.asSymbol).fadeTime = 0;
+			Ndef(targetNext.asSymbol).fadeTime = 0;
+		});
 	}, {
 		Ndef(targetPrev.asSymbol).fadeTime = 0;
 		Ndef(targetNext.asSymbol).fadeTime = 0;
