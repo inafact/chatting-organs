@@ -163,11 +163,11 @@ ObjectTable.put(\lastq, 0);
 
 OSCdef(\r1, {
 	|msg, time, addr, recvPort|
-	var targetPrev, targetNext, st, bnum, fd = 0;
+	var targetPrev, targetNext, st, bnum, fd = 0, targetAmp = 1;
 
 	"/sound".post; msg.postln;
 
-	if (ObjectTable.at(\last1) % 2 == 0, {
+	if (ObjectTable.at(\lastq) % 2 == 0, {
 		targetPrev = "bufrd1";
 		targetNext = "bufrd2";
 	}, {
@@ -176,28 +176,46 @@ OSCdef(\r1, {
 	});
 
 	st = msg[1].asString.split($ );
+	st.postln;
 
-	bnum = (st.at(0).asInteger - 1).clip(0, 100);
+	Ndef(targetPrev.asSymbol).fadeTime = 0;
+	Ndef(targetNext.asSymbol).fadeTime = 0;
+
+	if (st.at(0).asInteger > 21, {
+		bnum = -1;
+		targetAmp = 0;
+	}, {
+		bnum = (st.at(0).asInteger - 1).clip(0, 100);
+	});
+
+	"bnum ".post; bnum.postln;
 
 	if (st.size > 1, {
 		fd = st.at(1).asInteger;
+		// Ndef(targetPrev.asSymbol).fadeTime = 4;
+		// Ndef(targetNext.asSymbol).fadeTime = 4;
+
 		if (fd == 1, {
 			Ndef(targetPrev.asSymbol).fadeTime = 4;
 			Ndef(targetNext.asSymbol).fadeTime = 4;
-		}, {
-			Ndef(targetPrev.asSymbol).fadeTime = 0;
-			Ndef(targetNext.asSymbol).fadeTime = 0;
 		});
-	}, {
-		Ndef(targetPrev.asSymbol).fadeTime = 0;
-		Ndef(targetNext.asSymbol).fadeTime = 0;
+		if (fd == 2, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		});
+		if (fd == 3, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		});
 	});
 
 	Ndef(targetPrev.asSymbol).xset(\amp, 0);
-	Ndef(targetNext.asSymbol).set(\bufnum, bnum);
-	Ndef(targetNext.asSymbol).xset(\amp, 1);
+	if (bnum > -1, {
+		Ndef(targetNext.asSymbol).set(\bufnum, bnum);
+	});
+	Ndef(targetNext.asSymbol).xset(\amp, targetAmp);
 
-	ObjectTable.put(\last1, ObjectTable.at(\lastq) + 1);
+	ObjectTable.put(\lastq, ObjectTable.at(\lastq) + 1);
 }, '/sound', nil, 12200);
 
 OSCdef(\r2, {
