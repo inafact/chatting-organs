@@ -142,6 +142,7 @@ def onSizeChange(dat: DAT):
 			# afin2.par.cue.pulse()
 			# trig2.par.trigger.pulse()
 			pp2.run(delayMilliSeconds = delay)
+			# --
 			t_cell: Cell = ws_ref.findCell("/?speaker=catapult", cols=["label"])
 			if t_cell != None:
 				ds: baseCOMP = op("dispatcher2")

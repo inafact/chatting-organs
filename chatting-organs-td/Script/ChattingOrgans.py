@@ -134,10 +134,11 @@ class ChattingOrgans:
 		if path != None and Path(path).exists():
 			if self.currentSceneFilePath != path:
 				self.currentSceneFilePath = path
-				# --
+				# -- TODO:
 				dt: tableDAT = op("dialogue_src")		 
 				dt.par.file = path
 				# self.ReloadAndPlay()
+				# --
 		else:
 			debug("resource not found")
 
@@ -223,3 +224,23 @@ class ChattingOrgans:
 					dmxm.par[f"const{_channel.index}value"] = 0
 		
 		dmxm.par[f"const{channel.index}value"] = 1
+
+	def InstallationView(self, onoff: bool = True):
+		lv1 :layermixTOP = op("layermix1")
+		lv2 :layermixTOP = op("layermix2")
+		lmv1: moviefileinTOP = op("loop_drone")
+		lmv2: moviefileinTOP = op("loop_catapult")
+
+		if onoff:
+			debug("installation")
+			lv1.par.lay3bypass = False
+			lv2.par.lay3bypass = False
+			lmv1.par.play = True
+			lmv2.par.play = True
+		else:
+			debug("show")
+			lv1.par.lay3bypass = True
+			lv2.par.lay3bypass = True
+			lmv1.par.play = False
+			lmv2.par.play = False
+
