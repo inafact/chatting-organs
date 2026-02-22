@@ -127,7 +127,7 @@ class ChattingOrgans:
 		self.mainTimer.par.play = True
 		self.mainTimer.par.start.pulse()
 
-		self.oscOut.sendOSC("/start_scene", [ self.getSceneNumberFromPath() ])
+		self.oscOut.sendOSC("/scene_start", [ self.getSceneNumberFromPath() ])
 
 	def UpdateRootFolder(self, index: int):
 		rf: folderDAT = op("root")
@@ -187,7 +187,7 @@ class ChattingOrgans:
 	def EndScene(self):
 		self.mainTimer.par.play = False
 		sn: int = self.getSceneNumberFromPath()
-		self.oscOut.sendOSC("/end_scene", [ sn ])
+		self.oscOut.sendOSC("/scene_end", [ sn ])
 		
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset_dark")
@@ -207,7 +207,7 @@ class ChattingOrgans:
 
 	def NextScene(self):
 		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
-		if current == None and len(self.currentSceneFilePath) == 0:
+		if current == None and self.currentSceneFilePath == "":
 			# -- TODO:
 			self.ReloadAndPlay()
 		elif current != None and current.row < self.sceneList.numRows - 1:
