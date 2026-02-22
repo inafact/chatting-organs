@@ -32,9 +32,8 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 	"""
 	print(address, args)
 
-	if address == "/load_files":
+	if address == "/pipeline_finished":
 		# -- TODO:
-		op_dsc: tableDAT = op("dialogue_src")
 		tf: Path = Path(str(args[-1]))
 		debug(tf)
 		#if path.exists(tf):

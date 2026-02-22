@@ -172,7 +172,7 @@ class PipelineManager:
       # -- TODO:
       paths = self._run_pipeline(voices)
       SimpleUDPClient(self.td_player_address, self.td_player_port).send_message(
-        "/load_files", paths
+        "/pipeline_finished", paths
       )
       SimpleUDPClient(self._reply_client[0], 12001).send_message("/reply", 1)
       # --
@@ -288,7 +288,7 @@ class PipelineManager:
     ret_first_tsv = Path(aligned_tsvs[-1]).resolve()
     print(f"[PIPELINE FINISHED] @{datetime.now()}")
 
-    return [ str(ret_first_tsv) ]
+    return [ str(pipeline.output_dir) ]
 
 # ======================
 # Initialize
