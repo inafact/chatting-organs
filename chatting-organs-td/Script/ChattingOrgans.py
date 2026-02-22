@@ -134,9 +134,10 @@ class ChattingOrgans:
 		if path != None and Path(path).exists():
 			if self.currentSceneFilePath != path:
 				self.currentSceneFilePath = path
+				# --
 				dt: tableDAT = op("dialogue_src")		 
 				dt.par.file = path
-				self.ReloadAndPlay()
+				# self.ReloadAndPlay()
 		else:
 			debug("resource not found")
 
@@ -173,12 +174,18 @@ class ChattingOrgans:
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset")
 			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
+			if self.AutoNext:
+				self.sceneTimer.par.play = True
+				self.sceneTimer.par.start.pulse()
+		elif sn == 5:
+			# force to last
+			self.sceneTimer.par.play = True
+			self.sceneTimer.par.start.pulse()			 
 		else:
 			self.CallDMXPreset(60)
-
-		if self.AutoNext:
-			self.sceneTimer.par.play = True
-			self.sceneTimer.par.start.pulse()
+			if self.AutoNext:
+				self.sceneTimer.par.play = True
+				self.sceneTimer.par.start.pulse()
 
 	def NextScene(self):
 		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
