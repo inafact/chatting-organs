@@ -75,6 +75,7 @@ class ChattingOrgans:
 		components' extensions to be available, or that use promoted members.
 		"""
 		self.clearCurrentScene()
+		self.InstallationView(True)
 		debug("0.9.9", self.currentSceneFilePath)
 
 	def ReloadAndPlay(self):
