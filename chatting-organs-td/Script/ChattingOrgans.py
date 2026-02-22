@@ -112,7 +112,7 @@ class ChattingOrgans:
 			op("camera_level").par.opacity = 1
 			op("image_level*").par.opacity = 1
 			self.mainTimer.par.length = 0.5
-			self.AutoNext = True
+			self.AutoNext = False
 		# --
 
 		# -- TODO:
