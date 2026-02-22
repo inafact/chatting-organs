@@ -1,5 +1,5 @@
-main_locale = "en"
-# main_locale = "ja"
+# main_locale = "en"
+main_locale = "ja"
 
 directors_notes = [
   '''
@@ -22,12 +22,16 @@ directors_notes = [
     Pacing: Speaks at an exhausted pace, express angry emotion
     ''',
   '''
-    - 興奮した調子で、早いペースで話してください。
-    - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
+    ### DIRECTOR'S NOTES
+
+    Pacing: Speak in an excited tone and at a fast pace.
+
+    If the line ends with an exclamation mark or some exclamation marks at the end of the sentence, use an angry, growling tone.
     ''',
-   # '''
-   #  - 平坦な調子で感情表現を極力抑え、普通のペースで話してください。
-   #  '''
+  # '''
+  #   - 興奮した調子で、早いペースで話してください。
+  #   - セリフの終わりや語尾に「！」の文字を含む場合は、口調を強めていき、「！」が2文字以上続く場合は最終的に怒ってがなるような口調にしてください。
+  #   '''
   '''
     ### DIRECTOR'S NOTES
 
@@ -36,14 +40,14 @@ directors_notes = [
 ]
 
 [render_scenes]
-# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300, "options" = { "tempo" = 1.5 } }
-# 2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 400 }
-# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 400, "options" = { "camera" = false, "tempo" = 1 } }
-# 4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800 }
+# 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 300, "options" = { "tempo" = 1.5, "autonext" = false } }
+# 2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 400, "options" = { "autonext" = false } }
+# 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 400, "options" = { "camera" = false, "tempo" = 1, "autonext" = false } }
+# 4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "autonext" = false } }
 ##
-1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 800, "options" = { "tempo" = 1.5, "autonext" = false } }
+1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 850, "options" = { "tempo" = 1.5, "autonext" = false } }
 2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1800, "options" = { "autonext" = false} }
-3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 2000, "options" = { "autonext" = false } }
+3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 1800, "options" = { "autonext" = false } }
 4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "tempo" = 0.1, "autonext" = false } }
 5 = { "label"= "システム・フィードバックとしての終幕", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350, "options" = { "camera" = false, "tempo" = 0.5, "autonext" = false } }
 

@@ -161,7 +161,7 @@ class DirectionPipeline:
             if "/lighting" in tag_map:
                 al.direction_lighting = " ".join(tag_map["/lighting"])
             if "/drone" in tag_map:
-                al.direction_drone = " ".join(tag_map["/drone"])
+                al.direction_drone = ",".join(tag_map["/drone"])
             if "/catapult" in tag_map:
                 al.direction_catapult = " ".join(tag_map["/catapult"])
             if "/pause" in tag_map:

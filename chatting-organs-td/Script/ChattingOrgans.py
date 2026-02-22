@@ -56,6 +56,11 @@ class ChattingOrgans:
 		
 		# self.stored = StorageManager(self, ownerComp, storedItems)
 
+		# -- TODO:
+		op("camera_level").par.opacity = 0
+		op("image_level*").par.opacity = 0
+		self.clearCurrentScene()
+
 	# def onDestroyTD(self):
 	# 	"""
 	# 	Called when the extension or component is being deleted. Use this
@@ -74,12 +79,9 @@ class ChattingOrgans:
 		component. Use this instead of __init__ for tasks that require other
 		components' extensions to be available, or that use promoted members.
 		"""
-		# TODO:
-		self.clearCurrentScene()
-		# self.InstallationView(True)
-		op("camera_level").par.opacity = 0
-		op("image_level*").par.opacity = 0
 		debug("0.9.9", self.currentSceneFilePath)
+		dlInst: textDAT = op("delayInstallation")
+		dlInst.run(0, delayMilliSeconds = (5 * 1000))
 
 	def ReloadAndPlay(self):
 		op_afin: audiofileinCHOP = op("audiofilein1")
@@ -94,25 +96,29 @@ class ChattingOrgans:
 			else:
 				return
 
-		# -- check scene config, TODO:
+		# -- check scene config, default
+		_cam_opacity = 1
+		_imgg_opacity = 1
+		_mtm_length = 0.5
+		_anext = False
+		
 		si: Cell = self.currentSceneWithHeader.cell(1, "scene_info")
 		if si != None:
 			si_dict = json.loads(str(si.val))
 			if "camera" in si_dict:
-				op("camera_level").par.opacity = int(si_dict["camera"])
+				_cam_opacity = int(si_dict["camera"])
 			if "image" in si_dict:
-				op("image_level*").par.opacity = int(si_dict["image"])
+				_imgg_opacity = int(si_dict["image"])
 			if "tempo" in si_dict:
-				self.mainTimer.par.length = float(si_dict["tempo"])
-				self.CurrentTempo = float(si_dict["tempo"])
+				_mtm_length = float(si_dict["tempo"])
 			if "autonext" in si_dict:
-				self.AutoNext = bool(int(si_dict["autonext"]))
-		else:
-			# -- default, TODO:
-			op("camera_level").par.opacity = 1
-			op("image_level*").par.opacity = 1
-			self.mainTimer.par.length = 0.5
-			self.AutoNext = False
+				_anext = bool(int(si_dict["autonext"]))
+
+		op("camera_level").par.opacity = _cam_opacity
+		op("image_level*").par.opacity = _imgg_opacity
+		self.mainTimer.par.length = _mtm_length
+		self.CurrentTempo = _mtm_length
+		self.AutoNext = _anext
 		# --
 
 		# -- TODO:
@@ -131,7 +137,13 @@ class ChattingOrgans:
 		self.mainTimer.par.play = True
 		self.mainTimer.par.start.pulse()
 
-		self.oscOut.sendOSC("/scene_start", [ self.getSceneNumberFromPath() ])
+		cs: int = self.getSceneNumberFromPath()
+		# -- TODO:
+		if cs == 5:
+			self.CallDMXPreset(29)
+		# --
+		self.oscOut.sendOSC("/scene_start", [ cs ])
+		debug(f"{cs} configs -> {_cam_opacity} | {_imgg_opacity} | {_mtm_length} | {_anext}" )
 
 	def UpdateRootFolder(self, index: int):
 		rf: folderDAT = op("root")
@@ -146,7 +158,7 @@ class ChattingOrgans:
 			debug("resource not found")
 
 	def UpdateSceneFileList(self, index: int):
-		debug("updatescenefilelist", index)
+		debug("UpdateSceneFileList", index)
 		sf: folderDAT = op("scenes")
 		path: str = str(sf.cell(index + 1, "path"))
 		if path != None and Path(path).exists():
@@ -155,7 +167,6 @@ class ChattingOrgans:
 				# -- TODO:
 				dt: tableDAT = op("dialogue_src")		 
 				dt.par.file = path
-				# self.ReloadAndPlay()
 				# --
 		else:
 			debug("resource not found")
@@ -184,6 +195,7 @@ class ChattingOrgans:
 				return -1
 		else:
 			return -1
+
 	def GetCurrentScene(self) -> int:
 		# promoted version
 		return self.getSceneNumberFromPath()
@@ -191,12 +203,11 @@ class ChattingOrgans:
 	def EndScene(self):
 		self.mainTimer.par.play = False
 		sn: int = self.getSceneNumberFromPath()
-		debug("snum", sn)
 		self.oscOut.sendOSC("/scene_end", [ sn ])
 		
 		if sn  == 4:
-			dlDMX: textDAT = op("delayDMXPreset_dark")
-			dlDMX.run(29, delayMilliSeconds = (20 * 1000))
+			dlDMX: textDAT = op("delayDMXPreset")
+			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
 			if self.AutoNext:
 				self.sceneTimer.par.play = True
 				self.sceneTimer.par.start.pulse()
@@ -214,7 +225,6 @@ class ChattingOrgans:
 		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
 		debug(current, self.currentSceneFilePath, self.currentSceneFilePath == "")
 		if current == None and self.currentSceneFilePath == "":
-			# -- TODO:
 			self.ReloadAndPlay()
 		elif current != None and current.row < self.sceneList.numRows - 1:
 			self.currentSceneFilePath = self.currentScene.par.file = str(self.sceneList.cell(current.row + 1, "path"))
@@ -225,10 +235,12 @@ class ChattingOrgans:
 			op("webrender1").par.url = "http://localhost:9000/credit"
 			ot: levelTOP = op("level3")
 			ot.par.opacity.expr = 'op("for_credit")[0]'
-			dlDMX: textDAT = op("delayDMXPreset_exhibit")
 			self.clearCurrentScene()
+			dlDMX: textDAT = op("delayDMXPreset")
+			dlInst: textDAT = op("delayInstallation")
 			dlDMX.run(0, delayMilliSeconds = (30 * 1000))
-			# --
+			dlInst.run(0, delayMilliSeconds = (30 * 1000))
+
 	def RunPipeline(self):
 		self.oscOutPipeline.sendOSC("/run_pipeline", [])
 

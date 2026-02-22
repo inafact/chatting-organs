@@ -27,7 +27,6 @@ from typing import List
 # import json
 
 def mapToDMX(chan: int | list):
-	# TODO: improve
 	dmxm: constantCHOP = op("dmxmap")
 	if chan > 60:
 		_idx = max(0, chan - 1)
@@ -46,42 +45,36 @@ def mapToDMX(chan: int | list):
 		dmxm.par[f"const{channel.index}value"] = 1
 
 def sendMessage(dat: DAT):
-	# -- TODO: multi
 	oscs: oscoutDAT = op("oscout_to_external")
-	# oscl: oscoutDAT = op("oscout_to_light")
 	oscm: oscoutDAT = op("oscout_to_sound")
-	# --
 	idx = dat.numRows - 1		
 	keys = list(map(lambda c: c.val, dat.row(0)))
 	oscm.sendOSC(f"/voice", [dat.cell(idx, "speaker"), dat.cell(idx, "audio")])
+	cs: int = op("/project1/main_app").GetCurrentScene()
 
 	for k in keys[6:]:
 		msg = dat.cell(idx, k)
 		if msg != None and len(str(msg)) > 0:
-			if k == "drone":
-				oscs.sendOSC(f"/{k}", [dat.cell(idx, k)])
-			if k == "catapult":
-				oscs.sendOSC(f"/{k}", [dat.cell(idx, k)])
-			if k == "lighting":
-				msg = dat.cell(idx, k)
-				if op("/project1/main_app").GetCurrentScene() != 5:
-					mapToDMX(int(msg))
-				# oscl.sendOSC(f"/{k}", [msg])
+			if cs < 5:
+				if k == "drone":
+					# -- NOTE: multiple message at once
+					rmsgs = str(dat.cell(idx, k))
+					debug(k, rmsgs)
+					rmsgs = rmsgs.split(",")
+					for rmsg in rmsgs:
+						oscs.sendOSC(f"/{k}", [rmsg])
+					# -- 
+				if k == "catapult":
+					msg = dat.cell(idx, k)
+					debug(k, msg)
+					oscs.sendOSC(f"/{k}", [msg])
+				if k == "lighting":
+					msg = dat.cell(idx, k)
+					op("/project1/main_app").CallDMXPreset(int(msg) - 1)
+					# mapToDMX(int(msg))
 			if k == "sound":
 				oscm.sendOSC(f"/{k}", [dat.cell(idx, k)])
 		
-def onTableChange(dat: DAT, prevDAT: DAT, info: ChangedDATInfo):
-	"""
-	Called when a table change occurs. This callback can be used to evaluate 
-	several change conditions simultaneously.
-
-	Args:
-		dat: The changed DAT
-		prevDAT: The DAT containing previous contents
-		info: ChangedDATInfo object with specific details on what changed
-	"""
-	return
-
 def onSizeChange(dat: DAT):
 	"""
 	Called when the size (rows or columns) of the DAT changes.
@@ -107,7 +100,8 @@ def onSizeChange(dat: DAT):
 				delay = 6000
 			else:
 				delay = 0	
-		debug("delay ", delay)
+		
+		# debug("delay ", delay)
 
 		afin1: audiofileinCHOP = op("audiofilein1")
 		afin2: audiofileinCHOP = op("audiofilein2")

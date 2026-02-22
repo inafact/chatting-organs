@@ -228,10 +228,29 @@ OSCdef(\r2, {
 }, '/voice', nil, 12200);
 );
 
+
+// ---
 NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs);
 NetAddr("127.0.0.1", 10000).sendMsg(\reload_env);
 NetAddr("127.0.0.1", 10000).sendMsg(\run_pipeline);
 
-NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs);
-NetAddr("127.0.0.1", 10000).sendMsg(\reload_env);
-NetAddr("127.0.0.1", 10000).sendMsg(\run_pipeline);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 0);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 1);
+
+OSCdef(\test1, { |msg, time, addr, recvPort|
+	"/drone ".post; time.postln;
+	msg.postln;
+}, '/drone', nil, 9999);
+
+
+OSCdef(\test2, { |msg, time, addr, recvPort|
+	"/scene_start ".post; time.postln;
+	msg.postln;
+}, '/scnen_start', nil, 9999);
+
+
+OSCdef(\test3, { |msg, time, addr, recvPort|
+	"/scene_end ".post; time.postln;
+	msg.postln;
+}, '/scnen_end', nil, 9999);
+// --
