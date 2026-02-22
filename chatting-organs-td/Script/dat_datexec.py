@@ -48,7 +48,7 @@ def mapToDMX(chan: int | list):
 def sendMessage(dat: DAT):
 	# -- TODO: multi
 	oscs: oscoutDAT = op("oscout_to_external")
-	oscl: oscoutDAT = op("oscout_to_light")
+	# oscl: oscoutDAT = op("oscout_to_light")
 	oscm: oscoutDAT = op("oscout_to_sound")
 	# --
 	idx = dat.numRows - 1		
@@ -110,8 +110,8 @@ def onSizeChange(dat: DAT):
 
 		afin1: audiofileinCHOP = op("audiofilein1")
 		afin2: audiofileinCHOP = op("audiofilein2")
-		trig1: triggerCHOP = op("trig1")
-		trig2: triggerCHOP = op("trig2")
+		# trig1: triggerCHOP = op("trig1")
+		# trig2: triggerCHOP = op("trig2")
 		imm: baseCOMP = op("img_manager")
 		imm2: baseCOMP = op("img_manager2")
 		pp1: textDAT = op("pulse1")

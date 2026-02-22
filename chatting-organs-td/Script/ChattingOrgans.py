@@ -28,7 +28,7 @@ class ChattingOrgans:
 						   readOnly=False)
 
 		# attributes:
-		self.currentRootFolderPath = ""
+		self.currentRootFolderPath: str = ""
 		self.currentSceneFilePath: str = ""
 
 		self.folderList: folderDAT = op("root")
@@ -63,20 +63,32 @@ class ChattingOrgans:
 	# 	"""
 	# 	debug("onDestroyTD called")
 
+	def clearCurrentScene(self):
+		self.currentSceneFilePath = ""
+		self.currentScene.par.file = ""
+		self.currentScene.clear()
+
 	def onInitTD(self):
 		"""
 		Called after the extension is fully initialized and attached to the 
 		component. Use this instead of __init__ for tasks that require other
 		components' extensions to be available, or that use promoted members.
 		"""
-		debug("onInitTD called", "0.0.5")
+		self.clearCurrentScene()
+		debug("0.9.9", self.currentSceneFilePath)
 
 	def ReloadAndPlay(self):
-		debug("ReloadAndPlay called")
-
 		op_afin: audiofileinCHOP = op("audiofilein1")
 		op_afin2: audiofileinCHOP = op("audiofilein2")		
 		op_cntr: constantCHOP = op("cntr")
+
+		if self.currentScene.numRows == 0:
+			first_scene: Cell = self.sceneList.cell(1, "path")
+			if first_scene != None:
+				self.currentSceneFilePath = first_scene.val
+				self.currentScene.par.file = first_scene.val
+			else:
+				return
 
 		# -- check scene config, TODO:
 		si: Cell = self.currentSceneWithHeader.cell(1, "scene_info")
@@ -125,10 +137,12 @@ class ChattingOrgans:
 		if path != None and Path(path).exists():
 			self.currentRootFolderPath = path
 			sf.par.rootfolder = path
+			self.clearCurrentScene()
 		else:
 			debug("resource not found")
 
 	def UpdateSceneFileList(self, index: int):
+		debug("updatescenefilelist", index)
 		sf: folderDAT = op("scenes")
 		path: str = str(sf.cell(index + 1, "path"))
 		if path != None and Path(path).exists():
@@ -190,7 +204,10 @@ class ChattingOrgans:
 
 	def NextScene(self):
 		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
-		if current != None and current.row < self.sceneList.numRows - 1:
+		if current == None and len(self.currentSceneFilePath) == 0:
+			# -- TODO:
+			self.ReloadAndPlay()
+		elif current != None and current.row < self.sceneList.numRows - 1:
 			self.currentSceneFilePath = self.currentScene.par.file = str(self.sceneList.cell(current.row + 1, "path"))
 			self.ReloadAndPlay()
 		else:
