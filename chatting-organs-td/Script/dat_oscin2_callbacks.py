@@ -49,7 +49,6 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 	if address == "/reload_and_play":
 		op("/project1/main_app").ReloadAndPlay()
 	if address == "/scene_start":
-		# 
 		op("/project1/main_app").NextScene()
 		# op("/project1/main_app").ReloadAndPlay()
 	if address == "/next_scene":
