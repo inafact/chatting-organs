@@ -1,0 +1,193 @@
+"""
+Extension classes enhance TouchDesigner components with python. An
+extension is accessed via ext.ExtensionClassName from any operator
+within the extended component. If the extension is promoted via its
+Promote Extension parameter, all its attributes with capitalized names
+can be accessed externally, e.g. op('yourComp').PromotedFunction().
+
+Help: search "Extensions" in wiki
+"""
+
+from TDStoreTools import StorageManager
+import TDFunctions as TDF
+
+from pathlib import Path
+import json
+
+class ChattingOrgans:
+	"""
+	ChattingOrgans description
+	"""
+	def __init__(self, ownerComp):
+		# The component to which this extension is attached
+		self.ownerComp = ownerComp
+		
+		# properties
+		TDF.createProperty(self, 'MyProperty', value=0, dependable=True,
+						   readOnly=False)
+
+		# attributes:
+		self.currentRootFolderPath = ""
+		self.currentSceneFilePath: str = ""
+
+		self.folderList: folderDAT = op("root")
+		self.sceneList: folderDAT = op("scenes")
+		self.currentScene: tableDAT = op("dialogue_src")
+		self.currentSceneWithHeader: tableDAT = op("dialogue_src_headered")
+		self.mainTimer: timerCHOP = op("timer_main")
+		self.sceneTimer: timerCHOP = op("timer_scenes")
+		# -- TODO:
+		self.oscOut: oscoutDAT = op("oscout_to_external")
+		self.oscOutPipeline: oscoutDAT = op("oscout_to_pipeline")
+	
+		self.AutoNext: bool = True
+		self.NightMode: bool = False
+		self.CurrentTempo: float = 0.5
+
+		# stored items (persistent across saves and re-initialization):
+		storedItems = [
+			# Only 'name' is required...
+			{'name': 'StoredProperty', 'default': None, 'readOnly': False,
+			 						'property': True, 'dependable': True},
+		]
+		# Uncomment the line below to store StoredProperty. To clear stored
+		# 	items, use the Storage section of the Component Editor
+		
+		# self.stored = StorageManager(self, ownerComp, storedItems)
+
+	def myFunction(self, v):
+		debug(v)
+
+	# def onDestroyTD(self):
+	# 	"""
+	# 	Called when the extension or component is being deleted. Use this
+	# 	instead of __del__ for cleanup tasks.
+	# 	"""
+	# 	debug("onDestroyTD called")
+
+	def onInitTD(self):
+		"""
+		Called after the extension is fully initialized and attached to the 
+		component. Use this instead of __init__ for tasks that require other
+		components' extensions to be available, or that use promoted members.
+		"""
+		debug("onInitTD called", "0.0.5")
+
+	def ReloadAndPlay(self):
+		debug("ReloadAndPlay called")
+
+		op_afin: audiofileinCHOP = op("audiofilein1")
+		op_afin2: audiofileinCHOP = op("audiofilein2")		
+		op_cntr: constantCHOP = op("cntr")
+
+		# -- check scene config, TODO:
+		si: Cell = self.currentSceneWithHeader.cell(1, "scene_info")
+		if si != None:
+			si_dict = json.loads(str(si.val))
+			print(si_dict)
+			if "camera" in si_dict:
+				op("camera_level").par.opacity = int(si_dict["camera"])
+			if "image" in si_dict:
+				op("image_level*").par.opacity = int(si_dict["image"])
+			if "tempo" in si_dict:
+				self.mainTimer.par.length = float(si_dict["tempo"])
+				self.CurrentTempo = float(si_dict["tempo"])
+			if "autonext" in si_dict:
+				self.AutoNext = bool(int(si_dict["autonext"]))
+		else:
+			# -- default, TODO:
+			op("camera_level").par.opacity = 1
+			op("image_level*").par.opacity = 1
+			self.mainTimer.par.length = 0.5
+			self.AutoNext = True
+		# --
+
+		# -- TODO:
+		if op("webrender1").par.url != "http://localhost:9000?speaker=drone":
+			op("webrender1").par.url = "http://localhost:9000?speaker=drone"
+		op("level3").par.opacity.expr = 'op("trig1")[0]'
+		# --
+
+		op_afin.par.play = True
+		op_afin.par.cue = True
+		op_afin2.par.play = True
+		op_afin2.par.cue = True
+		op_cntr.par.const0value = 0
+
+		self.currentSceneFilePath = str(self.currentScene.par.file)
+		self.mainTimer.par.play = True
+		self.mainTimer.par.start.pulse()
+
+		self.oscOut.sendOSC("/start_scene", [ self.getSceneIndexFromPath() ])
+
+	def UpdateRootFolder(self, index: int):
+		rf: folderDAT = op("root")
+		sf: folderDAT = op("scenes")
+		path: str = str(rf.cell(index + 1, "path"))
+		
+		if path != None and Path(path).exists():
+			self.currentRootFolderPath = path
+			sf.par.rootfolder = path
+		else:
+			debug("resource not found")
+
+	def UpdateSceneFileList(self, index: int):
+		sf: folderDAT = op("scenes")
+		path: str = str(sf.cell(index + 1, "path"))
+		if path != None and Path(path).exists():
+			if self.currentSceneFilePath != path:
+				self.currentSceneFilePath = path
+				dt: tableDAT = op("dialogue_src")		 
+				dt.par.file = path
+				self.ReloadAndPlay()
+		else:
+			debug("resource not found")
+
+	def getSceneIndexFromPath(self, path: str | None = None) -> int:
+		if path == None:
+			current: Cell = self.sceneList.findCell(self.currentSceneFilePath, cols=["path"])
+		else:
+			current: Cell = self.sceneList.findCell(self.path, cols=["path"])
+		if current != None:
+			return current.row
+		else:
+			return -1
+
+	def EndScene(self):
+		self.mainTimer.par.play = False
+		self.oscOut.sendOSC("/end_scene", [ self.getSceneIndexFromPath() ])
+
+		if self.AutoNext:
+			self.sceneTimer.par.play = True
+			self.sceneTimer.par.start.pulse()
+
+	def NextScene(self):
+		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
+		if current != None and current.row < self.sceneList.numRows - 1:
+			self.currentSceneFilePath = self.currentScene.par.file = str(self.sceneList.cell(current.row + 1, "path"))
+			self.ReloadAndPlay()
+		else:
+			debug("all scnenes done")
+			# -- TODO:
+			op("webrender1").par.url = "http://localhost:9000/credit"
+			ot: levelTOP = op("level3")
+			ot.par.opacity.expr = 'op("for_credit")[0]'
+			# --
+	def RunPipeline(self):
+		self.oscOutPipeline.sendOSC("/run_pipeline", [])
+
+	def CallDMXPreset(self, preset: int = 0):
+		dmxm: constantCHOP = op("dmxmap")
+		if self.NightMode:
+			debug("NightMode active", preset, preset + 30)
+			channel: Channel = dmxm.chan(preset + 30)
+		else:
+			channel: Channel = dmxm.chan(preset)
+		
+		if channel != None:
+			for i in range(dmxm.numChans):
+				_channel: Channel = dmxm.chan(i)
+				if _channel != None and i != channel.index:
+					dmxm.par[f"const{_channel.index}value"] = 0
+		
+		dmxm.par[f"const{channel.index}value"] = 1

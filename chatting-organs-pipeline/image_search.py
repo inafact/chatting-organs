@@ -129,9 +129,9 @@ class ImageSearchPipeline:
             if s >= self.similarity_threshold
         ]
 
-        print("-"*10)
-        print(search_line)
-        print(matches[:3])
+        # print("-"*10)
+        # print(search_line)
+        # print(matches[:3])
 
         if matches:
           if self.choice_mode == "TOP":

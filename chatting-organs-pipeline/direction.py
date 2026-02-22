@@ -198,7 +198,7 @@ class DirectionPipeline:
     def _write_aligned_tsv(aligned: list[AlignedLine], path: Path, info: dict | None = None) -> Path:
         with open(path, "w", encoding="utf-8") as f:
             for i, al in enumerate(aligned):
-                if type(info) is dict and "optons" in info and i == 0:
+                if type(info) is dict and "options" in info and i == 0:
                     print("..add extra column for scene config")
                     f.write(
                         f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
