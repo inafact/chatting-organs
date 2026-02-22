@@ -58,12 +58,14 @@ def sendMessage(dat: DAT):
 	for k in keys[6:]:
 		msg = dat.cell(idx, k)
 		if msg != None and len(str(msg)) > 0:
-			if k == "drone" or k == "catapult":
+			if k == "drone":
+				oscs.sendOSC(f"/{k}", [dat.cell(idx, k)])
+			if k == "catapult":
 				oscs.sendOSC(f"/{k}", [dat.cell(idx, k)])
 			if k == "lighting":
 				msg = dat.cell(idx, k)
 				mapToDMX(int(msg))
-				oscl.sendOSC(f"/{k}", [msg])
+				# oscl.sendOSC(f"/{k}", [msg])
 			if k == "sound":
 				oscm.sendOSC(f"/{k}", [dat.cell(idx, k)])
 		

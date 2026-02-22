@@ -12,6 +12,7 @@ from TDStoreTools import StorageManager
 import TDFunctions as TDF
 
 from pathlib import Path
+import re
 import json
 
 class ChattingOrgans:
@@ -55,9 +56,6 @@ class ChattingOrgans:
 		
 		# self.stored = StorageManager(self, ownerComp, storedItems)
 
-	def myFunction(self, v):
-		debug(v)
-
 	# def onDestroyTD(self):
 	# 	"""
 	# 	Called when the extension or component is being deleted. Use this
@@ -84,7 +82,6 @@ class ChattingOrgans:
 		si: Cell = self.currentSceneWithHeader.cell(1, "scene_info")
 		if si != None:
 			si_dict = json.loads(str(si.val))
-			print(si_dict)
 			if "camera" in si_dict:
 				op("camera_level").par.opacity = int(si_dict["camera"])
 			if "image" in si_dict:
@@ -118,7 +115,7 @@ class ChattingOrgans:
 		self.mainTimer.par.play = True
 		self.mainTimer.par.start.pulse()
 
-		self.oscOut.sendOSC("/start_scene", [ self.getSceneIndexFromPath() ])
+		self.oscOut.sendOSC("/start_scene", [ self.getSceneNumberFromPath() ])
 
 	def UpdateRootFolder(self, index: int):
 		rf: folderDAT = op("root")
@@ -152,10 +149,32 @@ class ChattingOrgans:
 			return current.row
 		else:
 			return -1
+	
+	def getSceneNumberFromPath(self, path: str | None = None) -> int:
+		if path == None:
+			current: Cell = self.sceneList.findCell(self.currentSceneFilePath, cols=["path"])
+		else:
+			current: Cell = self.sceneList.findCell(self.path, cols=["path"])
+		if current != None:
+			p: Path = Path(current.val)
+			m = re.search(r"scene_(\d+)", p.name)
+			if m:
+				return int(m.group(1))
+			else:
+				return -1
+		else:
+			return -1
 
 	def EndScene(self):
 		self.mainTimer.par.play = False
-		self.oscOut.sendOSC("/end_scene", [ self.getSceneIndexFromPath() ])
+		sn: int = self.getSceneNumberFromPath()
+		self.oscOut.sendOSC("/end_scene", [ sn ])
+		
+		if sn  == 4:
+			dlDMX: textDAT = op("delayDMXPreset")
+			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
+		else:
+			self.CallDMXPreset(60)
 
 		if self.AutoNext:
 			self.sceneTimer.par.play = True
@@ -178,11 +197,17 @@ class ChattingOrgans:
 
 	def CallDMXPreset(self, preset: int = 0):
 		dmxm: constantCHOP = op("dmxmap")
-		if self.NightMode:
-			debug("NightMode active", preset, preset + 30)
-			channel: Channel = dmxm.chan(preset + 30)
+
+		if preset > 59:
+			_idx = preset
 		else:
-			channel: Channel = dmxm.chan(preset)
+			if self.NightMode:
+				debug("NightMode active", preset, preset + 30)
+				_idx = preset + 30
+			else:
+				_idx = preset
+		
+		channel: Channel = dmxm.chan(_idx)
 		
 		if channel != None:
 			for i in range(dmxm.numChans):
