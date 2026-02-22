@@ -64,7 +64,8 @@ def sendMessage(dat: DAT):
 				oscs.sendOSC(f"/{k}", [dat.cell(idx, k)])
 			if k == "lighting":
 				msg = dat.cell(idx, k)
-				mapToDMX(int(msg))
+				if op("/project1/main_app").GetCurrentScene() != 5:
+					mapToDMX(int(msg))
 				# oscl.sendOSC(f"/{k}", [msg])
 			if k == "sound":
 				oscm.sendOSC(f"/{k}", [dat.cell(idx, k)])

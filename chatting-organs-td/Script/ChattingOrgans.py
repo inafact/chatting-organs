@@ -180,6 +180,9 @@ class ChattingOrgans:
 				return -1
 		else:
 			return -1
+	def GetCurrentScene(self) -> int:
+		# promoted version
+		return self.getSceneNumberFromPath()
 
 	def EndScene(self):
 		self.mainTimer.par.play = False
@@ -187,8 +190,8 @@ class ChattingOrgans:
 		self.oscOut.sendOSC("/end_scene", [ sn ])
 		
 		if sn  == 4:
-			dlDMX: textDAT = op("delayDMXPreset")
-			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
+			dlDMX: textDAT = op("delayDMXPreset_dark")
+			dlDMX.run(29, delayMilliSeconds = (20 * 1000))
 			if self.AutoNext:
 				self.sceneTimer.par.play = True
 				self.sceneTimer.par.start.pulse()
@@ -216,6 +219,9 @@ class ChattingOrgans:
 			op("webrender1").par.url = "http://localhost:9000/credit"
 			ot: levelTOP = op("level3")
 			ot.par.opacity.expr = 'op("for_credit")[0]'
+			dlDMX: textDAT = op("delayDMXPreset_exhibit")
+			self.clearCurrentScene()
+			dlDMX.run(0, delayMilliSeconds = (30 * 1000))
 			# --
 	def RunPipeline(self):
 		self.oscOutPipeline.sendOSC("/run_pipeline", [])
