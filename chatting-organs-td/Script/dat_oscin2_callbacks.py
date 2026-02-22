@@ -33,6 +33,7 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 	print(address, args)
 
 	if address == "/load_files":
+		# -- TODO:
 		op_dsc: tableDAT = op("dialogue_src")
 		tf: Path = Path(str(args[-1]))
 		debug(tf)
@@ -44,5 +45,7 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 		op_afin2: audiofileinCHOP = op("audiofilein2")
 		op_afin2.par.play = False
 	if address == "/reload_and_play":
-		me.parent().ReloadAndPlay()
+		op("/project1/main_app").ReloadAndPlay()
+	if address == "/next_scene":
+		op("/project1/main_app").NextScene()
 	return
