@@ -12,8 +12,8 @@ from pipeline_utils import PipelineCancelledError, call_with_retry, extract_scen
 logger = logging.getLogger(__name__)
 
 VALID_TAGS = {
-    "sound", "lighting", "drone", "catapult",
-    "/sound", "/lighting", "/drone", "/catapult"
+    "sound", "lighting", "drone", "catapult", "pause",
+    "/sound", "/lighting", "/drone", "/catapult", "/pause",
 }
 
 
@@ -70,7 +70,7 @@ class DirectionPipeline:
 【出力ルール】
 ・各行の形式: [セリフID],[演出要素タグ],[演出指示番号],[パラメータ]
 ・セリフIDは「{scene_num}-行番号」形式（例: {scene_num}-1, {scene_num}-2, ...）
-・演出要素タグは /sound, /lighting, /drone, /catapult のいずれか
+・演出要素タグは /sound, /lighting, /drone, /catapult, /pause のいずれか
 ・パラメータは音楽切替エフェクト番号やドローン動作秒数など（不要なら空）
 ・演出不要な行はCSVに含めない
 ・CSVヘッダー行は不要、データ行のみ出力
@@ -164,6 +164,8 @@ class DirectionPipeline:
                 al.direction_drone = " ".join(tag_map["/drone"])
             if "/catapult" in tag_map:
                 al.direction_catapult = " ".join(tag_map["/catapult"])
+            if "/pause" in tag_map:
+                al.direction_pause = " ".join(tag_map["/pause"])
 
     # ------------------------------------------------------------------ #
     #  TSV I/O
@@ -196,21 +198,22 @@ class DirectionPipeline:
     def _write_aligned_tsv(aligned: list[AlignedLine], path: Path, info: dict | None = None) -> Path:
         with open(path, "w", encoding="utf-8") as f:
             for i, al in enumerate(aligned):
-                if type(info) is dict and "options" in info and i == 0:
+                if type(info) is dict and "optons" in info and i == 0:
                     print("..add extra column for scene config")
                     f.write(
                         f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
                         f"\t{al.stem_file_path}\t{al.reference_image_path}"
                         f"\t{al.direction_sound}\t{al.direction_lighting}"
                         f"\t{al.direction_drone}\t{al.direction_catapult}"
-                        f"\t{json.dumps(info["options"])}\n"
+                        f"\t{al.direction_pause}\t{json.dumps(info["options"])}\n"
                     )
                 else:
                     f.write(
                         f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
                         f"\t{al.stem_file_path}\t{al.reference_image_path}"
                         f"\t{al.direction_sound}\t{al.direction_lighting}"
-                        f"\t{al.direction_drone}\t{al.direction_catapult}\n"
+                        f"\t{al.direction_drone}\t{al.direction_catapult}"
+                        f"\t{al.direction_pause}\n"
                     )
             return path
 

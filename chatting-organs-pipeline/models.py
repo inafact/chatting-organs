@@ -20,6 +20,7 @@ class AlignedLine(BaseModel):
     direction_lighting: str = ""
     direction_drone: str = ""
     direction_catapult: str = ""
+    direction_pause: str = ""
 
 
 class SceneResult(BaseModel):
