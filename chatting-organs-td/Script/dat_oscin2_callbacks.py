@@ -49,6 +49,7 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 		op("/project1/main_app").ReloadAndPlay()
 	if address == "/scene_start":
 		cmd = int(args[-1])
+		debug("cmd", cmd)
 		if cmd == 0:
 			op("/project1/main_app").InstallationView(False)
 			op("/project1/main_app").CallDMXPreset(60)

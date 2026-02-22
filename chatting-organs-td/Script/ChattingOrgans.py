@@ -191,6 +191,7 @@ class ChattingOrgans:
 	def EndScene(self):
 		self.mainTimer.par.play = False
 		sn: int = self.getSceneNumberFromPath()
+		debug("snum", sn)
 		self.oscOut.sendOSC("/scene_end", [ sn ])
 		
 		if sn  == 4:
@@ -211,6 +212,7 @@ class ChattingOrgans:
 
 	def NextScene(self):
 		current: Cell = self.sceneList.findCell(self.currentScene.par.file, cols=["path"])
+		debug(current, self.currentSceneFilePath, self.currentSceneFilePath == "")
 		if current == None and self.currentSceneFilePath == "":
 			# -- TODO:
 			self.ReloadAndPlay()
