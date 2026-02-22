@@ -74,8 +74,11 @@ class ChattingOrgans:
 		component. Use this instead of __init__ for tasks that require other
 		components' extensions to be available, or that use promoted members.
 		"""
+		# TODO:
 		self.clearCurrentScene()
-		self.InstallationView(True)
+		# self.InstallationView(True)
+		op("camera_level").par.opacity = 0
+		op("image_level*").par.opacity = 0
 		debug("0.9.9", self.currentSceneFilePath)
 
 	def ReloadAndPlay(self):
