@@ -208,9 +208,14 @@ class ChattingOrgans:
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset")
 			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
-			if self.AutoNext:
-				self.sceneTimer.par.play = True
-				self.sceneTimer.par.start.pulse()
+			self.sceneTimer.par.play = True
+			self.sceneTimer.par.start.pulse()
+			# force to next
+			# if self.AutoNext:
+			#	self.sceneTimer.par.play = True
+			#	self.sceneTimer.par.start.pulse()
+			self.sceneTimer.par.play = True
+			self.sceneTimer.par.start.pulse()
 		elif sn == 5:
 			# force to last
 			self.sceneTimer.par.play = True
