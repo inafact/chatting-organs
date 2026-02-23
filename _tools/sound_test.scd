@@ -17,18 +17,14 @@ Server.local.boot.makeGui;
 NdefMixer(Server.local);
 )
 
+/*
 Ndef(\test1, { SinOsc.ar(120) });
 Ndef(\test2, { SinOsc.ar(240) });
 Ndef(\test3, { SinOsc.ar(80) });
-
-SoundFile.collect()
+*/
 
 (
 //
-/* sampler test */
-//
-// Server.local.boot.makeGui;
-
 Spec.add(\bufnum, ControlSpec(0, 50, \lin, 1, 0));
 Spec.add(\busindex, ControlSpec(0, 511, step: 1));
 Spec.add(\ioindex, ControlSpec(0, Server.default.options.numInputBusChannels - 1, step: 1));
@@ -39,9 +35,6 @@ Spec.add(\startPos, \unipolar);
 Spec.add(\endPos, \unipolar);
 Spec.add(\widerate, ControlSpec(-100, 100, \lin));
 Spec.add(\prescale, ControlSpec(0, 50, \lin));
-
-// ObjectTable.put(\mono_drone, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
-// ObjectTable.put(\mono_catapult, Buffer.alloc(Server.local, Server.local.sampleRate * 5));
 
 Server.local.waitForBoot.do({
 	var createWin;
@@ -220,12 +213,17 @@ OSCdef(\r1, {
 
 OSCdef(\r2, {
 	|msg, time, addr, recvPort|
-
 	"/voice".post; msg.postln;
-	// if(msg[1] == "<ドローン>", {
-	// }, {
-	// });
-}, '/voice', nil, 12200);
+	'/voice', nil, 12200);
+);
+
+OSCdef(\init_player, {
+	|msg, time, addr, recvPort|
+	Ndef(\bufrd1).set(\amp, 0);
+	Ndef(\bufrd2).set(\amp, 0);
+	Ndef(\bufrd1).play(2);
+	Ndef(\bufrd2).play(2);
+	'/init_Player', nil, 12200);
 );
 
 
@@ -237,6 +235,11 @@ NetAddr("127.0.0.1", 10000).sendMsg(\run_pipeline);
 NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 0);
 NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 1);
 
+OSCdef(\test0, { |msg, time, addr, recvPort|
+	"/catapult ".post; time.postln;
+	msg.postln;
+}, '/catapult', nil, 9999);
+
 OSCdef(\test1, { |msg, time, addr, recvPort|
 	"/drone ".post; time.postln;
 	msg.postln;
@@ -246,11 +249,11 @@ OSCdef(\test1, { |msg, time, addr, recvPort|
 OSCdef(\test2, { |msg, time, addr, recvPort|
 	"/scene_start ".post; time.postln;
 	msg.postln;
-}, '/scnen_start', nil, 9999);
+}, '/scene_start', nil, 9999);
 
 
 OSCdef(\test3, { |msg, time, addr, recvPort|
 	"/scene_end ".post; time.postln;
 	msg.postln;
-}, '/scnen_end', nil, 9999);
+}, '/scene_end', nil, 9999);
 // --
