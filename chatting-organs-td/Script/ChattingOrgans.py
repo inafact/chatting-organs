@@ -278,6 +278,8 @@ class ChattingOrgans:
 			lv2.par.lay3bypass = False
 			lmv1.par.play = True
 			lmv2.par.play = True
+			op("camera_level").par.opacity = 0
+			op("image_level*").par.opacity = 0
 		else:
 			debug("show")
 			lv1.par.lay3bypass = True
