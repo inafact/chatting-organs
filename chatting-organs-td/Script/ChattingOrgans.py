@@ -14,6 +14,7 @@ import TDFunctions as TDF
 from pathlib import Path
 import re
 import json
+import tomllib
 
 class ChattingOrgans:
 	"""
