@@ -164,7 +164,8 @@ Server.local.waitForBoot.do({
 			});
 		};
 
-		createWin.value("/sound", "C:/opt/_audio/*");
+		// createWin.value("/sound", "C:/opt/_audio/*");
+		createWin.value("/sound", "E:/_audio/*");
 
 		Ndef(\bufrd1).ar(2);
 		Ndef(\bufrd1, { |amp = 0.5, bufnum = 0, rate = 1, loop = 1, startPos = 0, endPos = 1, gain = 1, preamp = 1, baseFreq = 100 |
