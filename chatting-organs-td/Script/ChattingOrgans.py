@@ -38,13 +38,15 @@ class ChattingOrgans:
 		self.currentSceneWithHeader: tableDAT = op("dialogue_src_headered")
 		self.mainTimer: timerCHOP = op("timer_main")
 		self.sceneTimer: timerCHOP = op("timer_scenes")
-		# -- TODO:
 		self.oscOut: oscoutDAT = op("oscout_to_external")
 		self.oscOutPipeline: oscoutDAT = op("oscout_to_pipeline")
+		self.oscOutSound: oscoutDAT = op("oscout_to_sound")
 	
+		# promoted
 		self.AutoNext: bool = True
 		self.NightMode: bool = False
 		self.CurrentTempo: float = 0.5
+		self.AudioReady: bool = False
 
 		# stored items (persistent across saves and re-initialization):
 		storedItems = [
@@ -81,8 +83,14 @@ class ChattingOrgans:
 		components' extensions to be available, or that use promoted members.
 		"""
 		debug("0.9.9", self.currentSceneFilePath)
-		dlInst: textDAT = op("delayInstallation")
-		dlInst.run(0, delayMilliSeconds = (5 * 1000))
+
+	def SCIsReady(self):
+		if not self.AudioReady:
+			self.oscOutSound.sendOSC("/init_player", [])
+			debug("SC is ready")
+			dlInst: textDAT = op("delayInstallation")
+			dlInst.run(0, delayMilliSeconds = (5 * 1000))
+			self.AudioReady = True
 
 	def ReloadAndPlay(self):
 		op_afin: audiofileinCHOP = op("audiofilein1")
@@ -284,10 +292,14 @@ class ChattingOrgans:
 			lmv2.par.play = True
 			op("camera_level").par.opacity = 0
 			op("image_level*").par.opacity = 0
+			if self.AudioReady:
+				self.oscOutSound.sendOSC("/installation", [])
 		else:
 			debug("show")
 			lv1.par.lay3bypass = True
 			lv2.par.lay3bypass = True
 			lmv1.par.play = False
 			lmv2.par.play = False
+			if self.AudioReady:
+				self.oscOutSound.sendOSC("/silent", [])
 

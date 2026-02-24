@@ -1,6 +1,6 @@
 // Server.default.options.device = "ASIO : MOTU Gen 5";
 // Server.default.options.device = "ASIO : Komplete Audio 6";
-Server.default.options.device = "ASIO : Roland Rubix";
+// Server.default.options.device = "ASIO : Roland Rubix";
 Server.default.options.numOutputBusChannels = 4;
 Server.default.options.sampleRate = 48000;
 
@@ -17,7 +17,7 @@ Spec.add(\prescale, ControlSpec(0, 50, \lin));
 
 ObjectTable.put(\lastq, 0);
 
-OSCdef(\r1, {
+OSCdef(\sound, {
 	|msg, time, addr, recvPort|
 	var targetPrev, targetNext, st, bnum, fd = 0, targetAmp = 1;
 
@@ -61,6 +61,10 @@ OSCdef(\r1, {
 			Ndef(targetPrev.asSymbol).fadeTime = 4;
 			Ndef(targetNext.asSymbol).fadeTime = 4;
 		});
+		if (fd == 4, {
+			Ndef(targetPrev.asSymbol).fadeTime = 0;
+			Ndef(targetNext.asSymbol).fadeTime = 0;
+		});
 	});
 
 	Ndef(targetPrev.asSymbol).xset(\amp, 0);
@@ -72,10 +76,28 @@ OSCdef(\r1, {
 	ObjectTable.put(\lastq, ObjectTable.at(\lastq) + 1);
 }, '/sound', nil, 12200);
 
-OSCdef(\r2, {
+OSCdef(\installation, {
 	|msg, time, addr, recvPort|
-	"/voice".post; msg.postln;
+	var bnum;
 
+	"/installation".post; msg.postln;
+
+	bnum = ObjectTable.at("/sound_files".asSymbol).size - 1;
+	"bnum ".post; ObjectTable.at("/sound_files".asSymbol).last.path.post; bnum.postln;
+
+	Ndef(\bufrd1).fadeTime = 2;
+	Ndef(\bufrd2).fadeTime = 2;
+	Ndef(\bufrd1).set(\bufnum, bnum);
+	Ndef(\bufrd1).xset(\amp, 1);
+	Ndef(\bufrd2).xset(\amp, 0);
+
+	ObjectTable.put(\lastq, 0);
+}, '/installation', nil, 12200);
+
+OSCdef(\voice, {
+	|msg, time, addr, recvPort|
+	// TODO
+	"/voice".post; msg.postln;
 }, '/voice', nil, 12200);
 
 OSCdef(\init_player, {
@@ -84,10 +106,28 @@ OSCdef(\init_player, {
 	Ndef(\bufrd2).set(\amp, 0);
 	Ndef(\bufrd1).play(2);
 	Ndef(\bufrd2).play(2);
-}, '/init_Player', nil, 12200);
+}, '/init_player', nil, 12200);
+
+OSCdef(\silent, {
+	|msg, time, addr, recvPort|
+
+	Ndef(\bufrd1).fadeTime = 2;
+	Ndef(\bufrd2).fadeTime = 2;
+	Ndef(\bufrd1).xset(\amp, 0);
+	Ndef(\bufrd2).xset(\amp, 0);
+
+	ObjectTable.put(\lastq, 0);
+}, '/silent', nil, 12200);
+
+Tdef(\sc_ping, {
+	inf.do({
+		NetAddr("127.0.0.1", 10001).sendMsg(\sc_ping);
+		5.wait;
+	});
+});
 
 Server.local.waitForBoot.do({
-	AppClock.sched(10, {
+	AppClock.sched(15, {
 		var createWin;
 
 		createWin = { | wid = "audio", path = nil |
@@ -100,6 +140,9 @@ Server.local.waitForBoot.do({
 			if (path.notNil, {
 				filer = filer ++ SoundFile.collect(path);
 			});
+
+			ObjectTable.put((wid++"_files").asSymbol, filer);
+
 			dir = IdentityDictionary.new;
 			win = Window(wid, Rect(0, 0, ww, wh))
 			.onClose_({
@@ -188,6 +231,8 @@ Server.local.waitForBoot.do({
 			);
 			bo * amp * VarLag.kr(preamp, 0.5) * gain;
 		});
+
+		Tdef(\sc_ping).play;
 	})
 });
 

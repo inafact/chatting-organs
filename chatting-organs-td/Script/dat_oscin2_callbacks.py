@@ -31,6 +31,9 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 		peer: Peer object describing the originating message
 	"""
 	print(address, args)
+	
+	if address == "/sc_ping":
+		op("/project1/main_app").SCIsReady()
 
 	if address == "/pipeline_finished":
 		# -- TODO:
