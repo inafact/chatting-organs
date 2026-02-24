@@ -1,6 +1,8 @@
+// !! Select your audio interface
 // Server.default.options.device = "ASIO : MOTU Gen 5";
 // Server.default.options.device = "ASIO : Komplete Audio 6";
-// Server.default.options.device = "ASIO : Roland Rubix";
+Server.default.options.device = "ASIO : Roland Rubix";
+
 Server.default.options.numOutputBusChannels = 4;
 Server.default.options.sampleRate = 48000;
 
@@ -13,111 +15,12 @@ Spec.add(\loop, ControlSpec(0, 1, step: 1));
 Spec.add(\startPos, \unipolar);
 Spec.add(\endPos, \unipolar);
 Spec.add(\widerate, ControlSpec(-100, 100, \lin));
-Spec.add(\prescale, ControlSpec(0, 50, \lin));
 
 ObjectTable.put(\lastq, 0);
-
-OSCdef(\sound, {
-	|msg, time, addr, recvPort|
-	var targetPrev, targetNext, st, bnum, fd = 0, targetAmp = 1;
-
-	"/sound".post; msg.postln;
-
-	if (ObjectTable.at(\lastq) % 2 == 0, {
-		targetPrev = "bufrd1";
-		targetNext = "bufrd2";
-	}, {
-		targetPrev = "bufrd2";
-		targetNext = "bufrd1";
-	});
-
-	st = msg[1].asString.split($ );
-	st.postln;
-
-	Ndef(targetPrev.asSymbol).fadeTime = 0;
-	Ndef(targetNext.asSymbol).fadeTime = 0;
-
-	if (st.at(0).asInteger > 21, {
-		bnum = -1;
-		targetAmp = 0;
-	}, {
-		bnum = (st.at(0).asInteger - 1).clip(0, 100);
-	});
-
-	"bnum ".post; bnum.postln;
-
-	if (st.size > 1, {
-		fd = st.at(1).asInteger;
-
-		if (fd == 1, {
-			Ndef(targetPrev.asSymbol).fadeTime = 4;
-			Ndef(targetNext.asSymbol).fadeTime = 4;
-		});
-		if (fd == 2, {
-			Ndef(targetPrev.asSymbol).fadeTime = 4;
-			Ndef(targetNext.asSymbol).fadeTime = 4;
-		});
-		if (fd == 3, {
-			Ndef(targetPrev.asSymbol).fadeTime = 4;
-			Ndef(targetNext.asSymbol).fadeTime = 4;
-		});
-		if (fd == 4, {
-			Ndef(targetPrev.asSymbol).fadeTime = 0;
-			Ndef(targetNext.asSymbol).fadeTime = 0;
-		});
-	});
-
-	Ndef(targetPrev.asSymbol).xset(\amp, 0);
-	if (bnum > -1, {
-		Ndef(targetNext.asSymbol).set(\bufnum, bnum);
-	});
-	Ndef(targetNext.asSymbol).xset(\amp, targetAmp);
-
-	ObjectTable.put(\lastq, ObjectTable.at(\lastq) + 1);
-}, '/sound', nil, 12200);
-
-OSCdef(\installation, {
-	|msg, time, addr, recvPort|
-	var bnum;
-
-	"/installation".post; msg.postln;
-
-	bnum = ObjectTable.at("/sound_files".asSymbol).size - 1;
-	"bnum ".post; ObjectTable.at("/sound_files".asSymbol).last.path.post; bnum.postln;
-
-	Ndef(\bufrd1).fadeTime = 2;
-	Ndef(\bufrd2).fadeTime = 2;
-	Ndef(\bufrd1).set(\bufnum, bnum);
-	Ndef(\bufrd1).xset(\amp, 1);
-	Ndef(\bufrd2).xset(\amp, 0);
-
-	ObjectTable.put(\lastq, 0);
-}, '/installation', nil, 12200);
-
-OSCdef(\voice, {
-	|msg, time, addr, recvPort|
-	// TODO
-	"/voice".post; msg.postln;
-}, '/voice', nil, 12200);
-
-OSCdef(\init_player, {
-	|msg, time, addr, recvPort|
-	Ndef(\bufrd1).set(\amp, 0);
-	Ndef(\bufrd2).set(\amp, 0);
-	Ndef(\bufrd1).play(2);
-	Ndef(\bufrd2).play(2);
-}, '/init_player', nil, 12200);
-
-OSCdef(\silent, {
-	|msg, time, addr, recvPort|
-
-	Ndef(\bufrd1).fadeTime = 2;
-	Ndef(\bufrd2).fadeTime = 2;
-	Ndef(\bufrd1).xset(\amp, 0);
-	Ndef(\bufrd2).xset(\amp, 0);
-
-	ObjectTable.put(\lastq, 0);
-}, '/silent', nil, 12200);
+ObjectTable.put(\sndpath,
+	// "C:/opt/_audio/*"
+	"E:/_audio/*"
+);
 
 Tdef(\sc_ping, {
 	inf.do({
@@ -126,8 +29,8 @@ Tdef(\sc_ping, {
 	});
 });
 
-Server.local.waitForBoot.do({
-	AppClock.sched(15, {
+Server.local.waitForBoot({
+	AppClock.sched(5, {
 		var createWin;
 
 		createWin = { | wid = "audio", path = nil |
@@ -207,8 +110,7 @@ Server.local.waitForBoot.do({
 			});
 		};
 
-		// createWin.value("/sound", "C:/opt/_audio/*");
-		createWin.value("/sound", "E:/_audio/*");
+		createWin.value("/sound", ObjectTable.at(\sndpath));
 
 		Ndef(\bufrd1).ar(2);
 		Ndef(\bufrd1, { |amp = 0.5, bufnum = 0, rate = 1, loop = 1, startPos = 0, endPos = 1, gain = 1, preamp = 1, baseFreq = 100 |
@@ -233,8 +135,110 @@ Server.local.waitForBoot.do({
 		});
 
 		Tdef(\sc_ping).play;
-	})
+	});
 });
+
+OSCdef(\sound, {
+	|msg, time, addr, recvPort|
+	var targetPrev, targetNext, st, bnum, fd = 0, targetAmp = 1;
+
+	"/sound".post; msg.postln;
+
+	if (ObjectTable.at(\lastq) % 2 == 0, {
+		targetPrev = "bufrd1";
+		targetNext = "bufrd2";
+	}, {
+		targetPrev = "bufrd2";
+		targetNext = "bufrd1";
+	});
+
+	st = msg[1].asString.split($ );
+	st.postln;
+
+	Ndef(targetPrev.asSymbol).fadeTime = 0;
+	Ndef(targetNext.asSymbol).fadeTime = 0;
+
+	if (st.at(0).asInteger > 21, {
+		bnum = -1;
+		targetAmp = 0;
+	}, {
+		bnum = (st.at(0).asInteger - 1).clip(0, 100);
+	});
+
+	"bnum ".post; bnum.postln;
+
+	if (st.size > 1, {
+		fd = st.at(1).asInteger;
+
+		if (fd == 1, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		});
+		if (fd == 2, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		});
+		if (fd == 3, {
+			Ndef(targetPrev.asSymbol).fadeTime = 4;
+			Ndef(targetNext.asSymbol).fadeTime = 4;
+		});
+		if (fd == 4, {
+			Ndef(targetPrev.asSymbol).fadeTime = 0;
+			Ndef(targetNext.asSymbol).fadeTime = 0;
+		});
+	});
+
+	Ndef(targetPrev.asSymbol).xset(\amp, 0);
+	if (bnum > -1, {
+		Ndef(targetNext.asSymbol).set(\bufnum, bnum);
+	});
+	Ndef(targetNext.asSymbol).xset(\amp, targetAmp);
+
+	ObjectTable.put(\lastq, ObjectTable.at(\lastq) + 1);
+}, '/sound', nil, 12200);
+
+OSCdef(\installation, {
+	|msg, time, addr, recvPort|
+	var bnum;
+
+	"/installation".post; msg.postln;
+
+	bnum = ObjectTable.at("/sound_files".asSymbol).size - 1;
+	"bnum ".post; ObjectTable.at("/sound_files".asSymbol).last.path.post; bnum.postln;
+
+	Ndef(\bufrd1).fadeTime = 2;
+	Ndef(\bufrd2).fadeTime = 2;
+	Ndef(\bufrd1).set(\bufnum, bnum);
+	Ndef(\bufrd1).xset(\amp, msg[1].asFloat);
+	Ndef(\bufrd2).xset(\amp, 0);
+
+	ObjectTable.put(\lastq, 0);
+}, '/installation', nil, 12200);
+
+OSCdef(\voice, {
+	|msg, time, addr, recvPort|
+	// TODO
+	"/voice".post; msg.postln;
+}, '/voice', nil, 12200);
+
+OSCdef(\init_player, {
+	|msg, time, addr, recvPort|
+	Ndef(\bufrd1).set(\amp, 0);
+	Ndef(\bufrd2).set(\amp, 0);
+	Ndef(\bufrd1).play(2);
+	Ndef(\bufrd2).play(2);
+}, '/init_player', nil, 12200);
+
+OSCdef(\silent, {
+	|msg, time, addr, recvPort|
+
+	Ndef(\bufrd1).fadeTime = 2;
+	Ndef(\bufrd2).fadeTime = 2;
+	Ndef(\bufrd1).xset(\amp, 0);
+	Ndef(\bufrd2).xset(\amp, 0);
+
+	ObjectTable.put(\lastq, 0);
+}, '/silent', nil, 12200);
 
 Server.local.boot.makeGui;
 NdefMixer(Server.local);
