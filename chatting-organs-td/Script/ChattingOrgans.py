@@ -85,6 +85,18 @@ class ChattingOrgans:
 		components' extensions to be available, or that use promoted members.
 		"""
 		debug("0.9.9", self.currentSceneFilePath)
+		lconf: textDAT = op("local_config")
+		configs: dict = tomllib.loads(lconf.text)
+		if "prompt" in configs.keys():
+			debug(configs["prompt"])
+			self.folderList.par.rootfolder = configs["prompt"]["rootfolder"]
+		if "audiodev" in configs.keys():
+			debug(configs["audiodev"])
+			op("audiodevout1").par.device = configs["audiodev"]["device"]
+		if "videodevin" in configs.keys():
+			debug(configs["videodevin"])
+			op("videodevin1").par.device = configs["videodevin"]["device"]
+			op("videodevin1").par.signalformat = configs["videodevin"]["signalformat"]
 
 	def SCIsReady(self):
 		# system initialize when after supercollider startup
@@ -273,8 +285,10 @@ class ChattingOrgans:
 			self.oscOutPipeline.sendOSC("/run_pipeline", [])
 		else:
 			# only accept each hours 
-			if self.pipelineLastRequested != lastRequested.isoformat().split(":"):		
+			t: str = ":".join(lastRequested.isoformat("_").split(":")[:2])
+			if self.pipelineLastRequested != t:
 				self.oscOutPipeline.sendOSC("/run_pipeline", [])
+				self.pipelineLastRequested = t
 
 	def ReloadPipelineConfig(self, config: str = ""):
 		self.oscOutPipeline.sendOSC("/reload_pipeline", [])

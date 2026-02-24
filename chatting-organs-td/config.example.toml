@@ -1,0 +1,15 @@
+[prompt]
+rootfolder = "E:/ws/chatting-organs/chatting-organs-pipeline/outputs"
+
+
+[audiodev]
+device = '{0.0.0.00000000}.{025b70f1-c9b7-478f-9770-0dd6634c5e74}||スピーカー_(2-_Roland_Rubix_24)||1'
+
+
+[videodevin]
+device = 'V1|||\\?\usb#vid_0bda&pid_0102&mi_00#7&22a1f9e9&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\global|||0|||0|||NearStream CCD30'
+signalformat = 'f1920x1080p-60hz'
+
+
+[schedule]
+nightmode = 17
