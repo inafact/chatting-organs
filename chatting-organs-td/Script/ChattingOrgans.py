@@ -293,7 +293,7 @@ class ChattingOrgans:
 			op("camera_level").par.opacity = 0
 			op("image_level*").par.opacity = 0
 			if self.AudioReady:
-				self.oscOutSound.sendOSC("/installation", [])
+				self.oscOutSound.sendOSC("/installation", [0.0])
 		else:
 			debug("show")
 			lv1.par.lay3bypass = True
