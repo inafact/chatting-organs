@@ -32,6 +32,17 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 		segment: The segment object
 		cycle: The cycle index
 	"""
-	debug(datetime.now())
+	_now : datetime = datetime.now()
+	
+	# test
+	# op("/project1/main_app").RunPipeline(_now)
+	if _now.hour >= 17:
+		op("/project1/main_app").NightMode = True
+
+	if _now.minute == 20:
+		op("/project1/main_app").RunPipeline(_now)
+
+	if _now.minute == 50:
+		op("/project1/main_app").UpdateRootFolder(-1)
 
 	return

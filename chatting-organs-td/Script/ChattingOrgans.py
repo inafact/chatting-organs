@@ -11,6 +11,7 @@ Help: search "Extensions" in wiki
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 
+from datetime import datetime
 from pathlib import Path
 import re
 import json
@@ -31,6 +32,7 @@ class ChattingOrgans:
 		# attributes:
 		self.currentRootFolderPath: str = ""
 		self.currentSceneFilePath: str = ""
+		self.pipelineLastRequested: str = ""
 
 		self.folderList: folderDAT = op("root")
 		self.sceneList: folderDAT = op("scenes")
@@ -85,13 +87,18 @@ class ChattingOrgans:
 		debug("0.9.9", self.currentSceneFilePath)
 
 	def SCIsReady(self):
+		# system initialize when after supercollider startup
 		if not self.AudioReady:
 			self.oscOutSound.sendOSC("/init_player", [])
 			debug("SC is ready")
 			dlInst: textDAT = op("delayInstallation")
-			dlInst.run(0, delayMilliSeconds = (5 * 1000))
 			self.AudioReady = True
-
+			win1: windowCOMP = op("/window1")
+			win2: windowCOMP = op("/window2")
+			win1.par.winopen.pulse()
+			win2.par.winopen.pulse()
+			dlInst.run(0, delayMilliSeconds = (5 * 1000))
+	
 	def ReloadAndPlay(self):
 		op_afin: audiofileinCHOP = op("audiofilein1")
 		op_afin2: audiofileinCHOP = op("audiofilein2")		
@@ -105,7 +112,8 @@ class ChattingOrgans:
 			else:
 				return
 
-		# -- check scene config, default
+		# -- check scene config
+		# -- default
 		_cam_opacity = 1
 		_imgg_opacity = 1
 		_mtm_length = 0.5
@@ -157,7 +165,10 @@ class ChattingOrgans:
 	def UpdateRootFolder(self, index: int):
 		rf: folderDAT = op("root")
 		sf: folderDAT = op("scenes")
-		path: str = str(rf.cell(index + 1, "path"))
+		if index < 0:
+			path: str = str(rf.cell(rf.numRows - 1, "path"))
+		else:
+			path: str = str(rf.cell(index + 1, "path"))
 		
 		if path != None and Path(path).exists():
 			self.currentRootFolderPath = path
@@ -253,8 +264,16 @@ class ChattingOrgans:
 			dlDMX.run(0, delayMilliSeconds = (30 * 1000))
 			dlInst.run(0, delayMilliSeconds = (30 * 1000))
 
-	def RunPipeline(self):
-		self.oscOutPipeline.sendOSC("/run_pipeline", [])
+	def RunPipeline(self, lastRequested: datetime | None = None):	
+		if lastRequested == None:
+			self.oscOutPipeline.sendOSC("/run_pipeline", [])
+		else:
+			# only accept each hours 
+			if self.pipelineLastRequested != lastRequested.isoformat().split(":"):		
+				self.oscOutPipeline.sendOSC("/run_pipeline", [])
+
+	def ReloadPipelineConfig(self, config: str = ""):
+		self.oscOutPipeline.sendOSC("/reload_pipeline", [])
 
 	def CallDMXPreset(self, preset: int = 0):
 		dmxm: constantCHOP = op("dmxmap")
