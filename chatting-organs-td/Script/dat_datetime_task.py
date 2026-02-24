@@ -39,10 +39,12 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 	if _now.hour >= 17:
 		op("/project1/main_app").NightMode = True
 
-	if _now.minute == 20:
+	if _now.minute == 0 or _now.minute == 30:
+		# TODO: timing
 		op("/project1/main_app").RunPipeline(_now)
 
-	if _now.minute == 50:
+	if _now.minute == 15:
+		# TODO: random pick
 		op("/project1/main_app").UpdateRootFolder(-1)
 
 	return

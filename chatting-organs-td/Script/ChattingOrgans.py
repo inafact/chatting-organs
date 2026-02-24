@@ -166,14 +166,18 @@ class ChattingOrgans:
 		rf: folderDAT = op("root")
 		sf: folderDAT = op("scenes")
 		if index < 0:
+			# - pick last one
 			path: str = str(rf.cell(rf.numRows - 1, "path"))
 		else:
 			path: str = str(rf.cell(index + 1, "path"))
 		
 		if path != None and Path(path).exists():
-			self.currentRootFolderPath = path
-			sf.par.rootfolder = path
-			self.clearCurrentScene()
+			if self.currentRootFolderPath != path:
+				self.currentRootFolderPath = path
+				sf.par.rootfolder = path
+				self.clearCurrentScene()
+			else:
+				debug("no change")
 		else:
 			debug("resource not found")
 
