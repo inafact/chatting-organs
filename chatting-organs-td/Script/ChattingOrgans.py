@@ -173,9 +173,10 @@ class ChattingOrgans:
 		self.mainTimer.par.start.pulse()
 
 		cs: int = self.getSceneNumberFromPath()
-		# -- TODO: dark
+		# -- TODO: dark and silence
 		if cs == 5:
 			self.CallDMXPreset(29)
+			self.oscOutSound.sendOSC("/silent", [])
 		# --
 		self.oscOut.sendOSC("/scene_start", [ cs ])
 		debug(f"{cs} configs -> {_cam_opacity} | {_imgg_opacity} | {_mtm_length} | {_anext}" )
@@ -328,15 +329,13 @@ class ChattingOrgans:
 	def InstallationView(self, onoff: bool = True):
 		lv1 :layermixTOP = op("layermix1")
 		lv2 :layermixTOP = op("layermix2")
-		lmv1: moviefileinTOP = op("loop_drone")
-		lmv2: moviefileinTOP = op("loop_catapult")
+		lmv1: moviefileinTOP = op("loop_archive")
 
 		if onoff:
 			debug("installation")
 			lv1.par.lay3bypass = False
 			lv2.par.lay3bypass = False
 			lmv1.par.play = True
-			lmv2.par.play = True
 			op("camera_level").par.opacity = 0
 			op("image_level*").par.opacity = 0
 			if self.AudioReady:
@@ -346,7 +345,6 @@ class ChattingOrgans:
 			lv1.par.lay3bypass = True
 			lv2.par.lay3bypass = True
 			lmv1.par.play = False
-			lmv2.par.play = False
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/silent", [])
 
