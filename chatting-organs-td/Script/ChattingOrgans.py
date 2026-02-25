@@ -85,6 +85,8 @@ class ChattingOrgans:
 		components' extensions to be available, or that use promoted members.
 		"""
 		debug("0.9.9", self.currentSceneFilePath)
+		op("audiodevout1").par.refresh.pulse()
+		# op("videodevin1").par.refresh.ulse()
 		
 	def SCIsReady(self):
 		# system initialize when after supercollider startup
@@ -99,14 +101,16 @@ class ChattingOrgans:
 			if "prompt" in configs.keys():
 				debug(configs["prompt"])
 				self.folderList.par.rootfolder = configs["prompt"]["rootfolder"]
-			""" if "audiodev" in configs.keys():
+				self.UpdateRootFolder(-1)
+			if "audiodev" in configs.keys():
 				debug(configs["audiodev"])
 				op("audiodevout1").par.device = configs["audiodev"]["device"]
 			if "videodevin" in configs.keys():
 				debug(configs["videodevin"])
-				op("videodevin1").par.device = configs["videodevin"]["device"]
-				op("videodevin1").par.signalformat = configs["videodevin"]["signalformat"] """
+				# op("videodevin1").par.device = configs["videodevin"]["device"]
+				op("videodevin1").par.signalformat = configs["videodevin"]["signalformat"]
 			#
+			""" op("audiodevout1").par.device = "{0.0.0.00000000}.{5f94edcd-226d-471c-ae8b-5b3c1764d87e}" """
 			win1: windowCOMP = op("/window1")
 			win2: windowCOMP = op("/window2")
 			win1.par.winopen.pulse()
@@ -169,7 +173,7 @@ class ChattingOrgans:
 		self.mainTimer.par.start.pulse()
 
 		cs: int = self.getSceneNumberFromPath()
-		# -- TODO:
+		# -- TODO: dark
 		if cs == 5:
 			self.CallDMXPreset(29)
 		# --
@@ -190,8 +194,12 @@ class ChattingOrgans:
 				self.currentRootFolderPath = path
 				sf.par.rootfolder = path
 				self.clearCurrentScene()
+				debug("update", self.currentRootFolderPath)
+				#
+				# wdt: widgetCOMP = op("/project1/2_folders_scenes/1_dlm_root")				 
 			else:
-				debug("no change")
+				pass
+				# debug("no change")
 		else:
 			debug("resource not found")
 

@@ -38,6 +38,9 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 	# op("/project1/main_app").RunPipeline(_now)
 	if _now.hour >= 17:
 		op("/project1/main_app").NightMode = True
+	
+	if _now.hour == 19 and _now.minute == 0 and _now.second < 3:
+		op("/project1/main_app").CallDMXPreset(29)
 
 	if _now.minute == 0 or _now.minute == 30:
 		# TODO: timing
