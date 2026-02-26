@@ -44,6 +44,7 @@ class ChattingOrgans:
 		self.oscOutPipeline: oscoutDAT = op("oscout_to_pipeline")
 		self.oscOutSound: oscoutDAT = op("oscout_to_sound")
 		self.sceneLineCounter: constantCHOP = op("cntr")
+		self.pipelineConfigs = ["./app_config.toml", "./app_config_en.toml"]
 	
 		# promoted
 		self.AutoNext: bool = True
@@ -298,8 +299,17 @@ class ChattingOrgans:
 				self.oscOutPipeline.sendOSC("/run_pipeline", [])
 				self.pipelineLastRequested = t
 
-	def ReloadPipelineConfig(self, config: str = ""):
-		self.oscOutPipeline.sendOSC("/reload_pipeline", [])
+	def ReloadPipelineConfig(self, config: str = "", now: datetime | None = None):
+		if config == "":
+			if now != None:
+				if now.hour % 2 == 0:
+					self.oscOutPipeline.sendOSC("/reload_pipeline", [self.pipelineConfigs[1]])
+				else:
+					self.oscOutPipeline.sendOSC("/reload_pipeline", [self.pipelineConfigs[0]])
+			else:
+				self.oscOutPipeline.sendOSC("/reload_pipeline", [])
+		else:
+			self.oscOutPipeline.sendOSC("/reload_pipeline", [config])
 
 	def CallDMXPreset(self, preset: int = 0):
 		dmxm: constantCHOP = op("dmxmap")
