@@ -26,6 +26,9 @@ Make sure the corresponding toggle is enabled in the DAT Execute DAT.
 from typing import List
 # import json
 
+def onTableChange(dat: DAT, prevDAT: DAT, info: ChangedDATInfo):
+	return
+
 def mapToDMX(chan: int | list):
 	dmxm: constantCHOP = op("dmxmap")
 	if chan > 60:
@@ -59,14 +62,14 @@ def sendMessage(dat: DAT):
 				if k == "drone":
 					# -- NOTE: multiple message at once
 					rmsgs = str(dat.cell(idx, k))
-					debug(k, rmsgs)
+					# debug(k, rmsgs)
 					rmsgs = rmsgs.split(",")
 					for rmsg in rmsgs:
 						oscs.sendOSC(f"/{k}", [rmsg])
 					# -- 
 				if k == "catapult":
 					msg = dat.cell(idx, k)
-					debug(k, msg)
+					# debug(k, msg)
 					oscs.sendOSC(f"/{k}", [msg])
 				if k == "lighting":
 					msg = dat.cell(idx, k)

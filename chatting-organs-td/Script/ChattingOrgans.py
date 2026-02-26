@@ -43,6 +43,7 @@ class ChattingOrgans:
 		self.oscOut: oscoutDAT = op("oscout_to_external")
 		self.oscOutPipeline: oscoutDAT = op("oscout_to_pipeline")
 		self.oscOutSound: oscoutDAT = op("oscout_to_sound")
+		self.sceneLineCounter: constantCHOP = op("cntr")
 	
 		# promoted
 		self.AutoNext: bool = True
@@ -77,6 +78,7 @@ class ChattingOrgans:
 		self.currentSceneFilePath = ""
 		self.currentScene.par.file = ""
 		self.currentScene.clear()
+		self.sceneLineCounter.par.const0value = -1
 
 	def onInitTD(self):
 		"""
@@ -85,8 +87,10 @@ class ChattingOrgans:
 		components' extensions to be available, or that use promoted members.
 		"""
 		debug("0.9.9", self.currentSceneFilePath)
+		# --
 		op("audiodevout1").par.refresh.pulse()
 		# op("videodevin1").par.refresh.ulse()
+		# --
 		
 	def SCIsReady(self):
 		# system initialize when after supercollider startup
@@ -109,8 +113,6 @@ class ChattingOrgans:
 				debug(configs["videodevin"])
 				# op("videodevin1").par.device = configs["videodevin"]["device"]
 				op("videodevin1").par.signalformat = configs["videodevin"]["signalformat"]
-			#
-			""" op("audiodevout1").par.device = "{0.0.0.00000000}.{5f94edcd-226d-471c-ae8b-5b3c1764d87e}" """
 			win1: windowCOMP = op("/window1")
 			win2: windowCOMP = op("/window2")
 			win1.par.winopen.pulse()
@@ -120,7 +122,6 @@ class ChattingOrgans:
 	def ReloadAndPlay(self):
 		op_afin: audiofileinCHOP = op("audiofilein1")
 		op_afin2: audiofileinCHOP = op("audiofilein2")		
-		op_cntr: constantCHOP = op("cntr")
 
 		if self.currentScene.numRows == 0:
 			first_scene: Cell = self.sceneList.cell(1, "path")
@@ -166,7 +167,7 @@ class ChattingOrgans:
 		op_afin.par.cue = True
 		op_afin2.par.play = True
 		op_afin2.par.cue = True
-		op_cntr.par.const0value = 0
+		self.sceneLineCounter.par.const0value = 0
 
 		self.currentSceneFilePath = str(self.currentScene.par.file)
 		self.mainTimer.par.play = True
@@ -255,9 +256,6 @@ class ChattingOrgans:
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset")
 			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
-			# self.sceneTimer.par.play = True
-			# self.sceneTimer.par.start.pulse()
-			# force to next
 			if self.AutoNext:
 				self.sceneTimer.par.play = True
 				self.sceneTimer.par.start.pulse()
@@ -283,8 +281,7 @@ class ChattingOrgans:
 			debug("all scnenes done")
 			# -- TODO:
 			op("webrender1").par.url = "http://localhost:9000/credit"
-			ot: levelTOP = op("level3")
-			ot.par.opacity.expr = 'op("for_credit")[0]'
+			op("pulse_for_credit").run(0, delayMilliSeconds = 3000)
 			self.clearCurrentScene()
 			dlDMX: textDAT = op("delayDMXPreset")
 			dlInst: textDAT = op("delayInstallation")
@@ -336,6 +333,7 @@ class ChattingOrgans:
 			lv1.par.lay3bypass = False
 			lv2.par.lay3bypass = False
 			lmv1.par.play = True
+			lmv1.par.cuepulse.pulse()
 			op("camera_level").par.opacity = 0
 			op("image_level*").par.opacity = 0
 			if self.AudioReady:

@@ -30,7 +30,7 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 		args: List of values contained within the OSC message
 		peer: Peer object describing the originating message
 	"""
-	print(address, args)
+	# print(address, args)
 	
 	if address == "/sc_ping":
 		op("/project1/main_app").SCIsReady()
