@@ -300,16 +300,17 @@ class ChattingOrgans:
 				self.pipelineLastRequested = t
 
 	def ReloadPipelineConfig(self, config: str = "", now: datetime | None = None):
+		debug(config, now)
 		if config == "":
 			if now != None:
 				if now.hour % 2 == 0:
-					self.oscOutPipeline.sendOSC("/reload_pipeline", [self.pipelineConfigs[1]])
+					self.oscOutPipeline.sendOSC("/reload_configs", [self.pipelineConfigs[1]])
 				else:
-					self.oscOutPipeline.sendOSC("/reload_pipeline", [self.pipelineConfigs[0]])
+					self.oscOutPipeline.sendOSC("/reload_configs", [self.pipelineConfigs[0]])
 			else:
-				self.oscOutPipeline.sendOSC("/reload_pipeline", [])
+				self.oscOutPipeline.sendOSC("/reload_configs", [])
 		else:
-			self.oscOutPipeline.sendOSC("/reload_pipeline", [config])
+			self.oscOutPipeline.sendOSC("/reload_configs", [config])
 
 	def CallDMXPreset(self, preset: int = 0):
 		dmxm: constantCHOP = op("dmxmap")

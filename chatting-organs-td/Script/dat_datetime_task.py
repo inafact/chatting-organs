@@ -43,7 +43,7 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 		op("/project1/main_app").CallDMXPreset(29)
 
 	if _now.minute == 40:
-		op("/project1/main_app").ReloadPipelineConfig()
+		op("/project1/main_app").ReloadPipelineConfig(now = _now)
 
 	if _now.minute == 45:
 		# TODO: timing

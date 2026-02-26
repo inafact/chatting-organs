@@ -29,7 +29,7 @@ class DialoguePipeline:
     def __init__(
         self,
         prompt_path: str = "prompt_example.txt",
-        output_dir: str = "outputs",
+        output_dir: str = "outputs_tmp",
         model: str = "gpt-4o",
         temperature: float = 0.8,
         render_scenes: dict = DEFAULT_SCENE_INFO,

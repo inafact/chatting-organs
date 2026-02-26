@@ -285,10 +285,11 @@ class PipelineManager:
       print(f"\n演出指示生成完了: {len(aligned_tsvs)} ファイル")
       print(f"@{datetime.now()}")
 
-    ret_first_tsv = Path(aligned_tsvs[-1]).resolve()
     print(f"[PIPELINE FINISHED] @{datetime.now()}")
+    prod_dir_str = str(pipeline.output_dir).replace("_tmp", "")
+    prod_dir: Path = pipeline.output_dir.replace(prod_dir_str)
 
-    return [ str(pipeline.output_dir) ]
+    return [ str(prod_dir) ]
 
 # ======================
 # Initialize
