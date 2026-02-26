@@ -42,14 +42,14 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 	if _now.hour == 19 and _now.minute == 0 and _now.second < 3:
 		op("/project1/main_app").CallDMXPreset(29)
 
-	if _now.minute == 40:
+	if _now.minute == 40 and _now.second < 3:
 		op("/project1/main_app").ReloadPipelineConfig(now = _now)
 
-	if _now.minute == 45:
+	if _now.minute == 45 and _now.second < 3:
 		# TODO: timing
 		op("/project1/main_app").RunPipeline(_now)
 
-	if _now.minute == 25:
+	if _now.minute == 27 and _now.second < 3:
 		# TODO: random pick
 		op("/project1/main_app").UpdateRootFolder(-1)
 

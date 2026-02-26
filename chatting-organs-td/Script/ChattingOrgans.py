@@ -206,6 +206,10 @@ class ChattingOrgans:
 		else:
 			debug("resource not found")
 
+	def GetCurrentSceneFolder(self) -> str:
+		# promoted version, GET
+		return self.currentRootFolderPath
+
 	def UpdateSceneFileList(self, index: int):
 		debug("UpdateSceneFileList", index)
 		sf: folderDAT = op("scenes")
@@ -304,9 +308,9 @@ class ChattingOrgans:
 		if config == "":
 			if now != None:
 				if now.hour % 2 == 0:
-					self.oscOutPipeline.sendOSC("/reload_configs", [self.pipelineConfigs[1]])
-				else:
 					self.oscOutPipeline.sendOSC("/reload_configs", [self.pipelineConfigs[0]])
+				else:
+					self.oscOutPipeline.sendOSC("/reload_configs", [self.pipelineConfigs[1]])
 			else:
 				self.oscOutPipeline.sendOSC("/reload_configs", [])
 		else:
