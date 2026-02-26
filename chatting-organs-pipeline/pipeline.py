@@ -32,11 +32,12 @@ class DialoguePipeline:
         output_dir: str = "outputs_tmp",
         model: str = "gpt-4o",
         temperature: float = 0.8,
+        main_locale: str = "ja",
         render_scenes: dict = DEFAULT_SCENE_INFO,
         cancel_event: Event | None = None,
     ):
         self.prompt_text = Path(prompt_path).read_text(encoding="utf-8")
-        self.output_dir = Path(f"{output_dir}/{datetime.now().isoformat("_").replace(":", "")}")
+        self.output_dir = Path(f"{output_dir}/{datetime.now().isoformat("_").replace(":", "")}_{main_locale}")
         self.output_dir.mkdir(exist_ok=True)
 
         # -- TODO:

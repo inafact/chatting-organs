@@ -198,23 +198,13 @@ class DirectionPipeline:
     def _write_aligned_tsv(aligned: list[AlignedLine], path: Path, info: dict | None = None) -> Path:
         with open(path, "w", encoding="utf-8") as f:
             for i, al in enumerate(aligned):
-                if type(info) is dict and "options" in info and i == 0:
-                    print("..add extra column for scene config")
-                    f.write(
-                        f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
-                        f"\t{al.stem_file_path}\t{al.reference_image_path}"
-                        f"\t{al.direction_sound}\t{al.direction_lighting}"
-                        f"\t{al.direction_drone}\t{al.direction_catapult}"
-                        f"\t{al.direction_pause}\t{json.dumps(info["options"])}\n"
-                    )
-                else:
-                    f.write(
-                        f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
-                        f"\t{al.stem_file_path}\t{al.reference_image_path}"
-                        f"\t{al.direction_sound}\t{al.direction_lighting}"
-                        f"\t{al.direction_drone}\t{al.direction_catapult}"
-                        f"\t{al.direction_pause}\n"
-                    )
+                f.write(
+                    f"{al.speaker}\t{al.line}\t{al.line_en}\t{al.start_time:.3f}"
+                    f"\t{al.stem_file_path}\t{al.reference_image_path}"
+                    f"\t{al.direction_sound}\t{al.direction_lighting}"
+                    f"\t{al.direction_drone}\t{al.direction_catapult}"
+                    f"\t{al.direction_pause}\n"
+                )
             return path
 
     # ------------------------------------------------------------------ #
@@ -252,10 +242,7 @@ class DirectionPipeline:
             csv_text = output.raw
             directions = self._parse_direction_csv(csv_text, scene_num, len(lines))
             self._merge_directions(lines, directions)
-            if len(self.scenes_info) > 0 and str(scene_num) in self.scenes_info:
-              self._write_aligned_tsv(lines, tsv_path, self.scenes_info[str(scene_num)])
-            else:
-              self._write_aligned_tsv(lines, tsv_path)
+            self._write_aligned_tsv(lines, tsv_path)
             result_paths.append(tsv_path)
             print(f"    -> {tsv_path}  ({len(lines)} 行, 10列)")
 

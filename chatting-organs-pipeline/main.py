@@ -17,6 +17,7 @@ from direction import DirectionPipeline
 from image_search import ImageSearchPipeline
 from pipeline import DialoguePipeline
 from tts import TTSPipeline
+from tweaks import TweaksPipeline
 from pipeline_utils import PipelineCancelledError
 
 load_dotenv()
@@ -204,6 +205,7 @@ class PipelineManager:
         # output_dir="output",
         model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         temperature=float(os.getenv("TEMPERATURE", "0.8")),
+        main_locale=self.main_locale,
         render_scenes=self.render_scenes,
         cancel_event=self._cancel_event,
     )
@@ -274,18 +276,27 @@ class PipelineManager:
       raise PipelineCancelledError("Cancelled before Direction")
 
     if self.direction_config.get("enabled", False):
-      direction_pipeline = DirectionPipeline(
+        direction_pipeline = DirectionPipeline(
+            output_dir=pipeline.output_dir,
+            prompt_path=str(self.direction_config.get("prompt_path", "direction_prompt_example.txt")),
+            model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
+            scenes_info=self.render_scenes,
+            cancel_event=self._cancel_event,
+        )
+        aligned_tsvs = direction_pipeline.run(aligned_tsvs)
+        print(f"\n演出指示生成完了: {len(aligned_tsvs)} ファイル")
+        print(f"@{datetime.now()}")
+
+    tweaks_pipeline = TweaksPipeline(
         output_dir=pipeline.output_dir,
-        prompt_path=str(self.direction_config.get("prompt_path", "direction_prompt_example.txt")),
-        model=os.getenv("GEMINI_LLM_MODEL", "gpt-4o"),
         scenes_info=self.render_scenes,
         cancel_event=self._cancel_event,
       )
-      aligned_tsvs = direction_pipeline.run(aligned_tsvs)
-      print(f"\n演出指示生成完了: {len(aligned_tsvs)} ファイル")
-      print(f"@{datetime.now()}")
+    aligned_tsvs = tweaks_pipeline.run(aligned_tsvs)
 
     print(f"[PIPELINE FINISHED] @{datetime.now()}")
+
+    #": ---
     prod_dir_str = str(pipeline.output_dir).replace("_tmp", "")
     prod_dir: Path = pipeline.output_dir.replace(prod_dir_str)
 
@@ -296,8 +307,8 @@ class PipelineManager:
 # ======================
 
 manager = PipelineManager(
-  td_player_address = os.getenv("PLAYER_OSC_ADDR", "127.0.0.1"),
-  td_player_port = int(os.getenv("PLAYER_OSC_PORT", 10001))
+    td_player_address = os.getenv("PLAYER_OSC_ADDR", "127.0.0.1"),
+    td_player_port = int(os.getenv("PLAYER_OSC_PORT", 10001))
 )
 
 dispatcher.map("/run_pipeline", manager.run_pipeline, needs_reply_address=True)
