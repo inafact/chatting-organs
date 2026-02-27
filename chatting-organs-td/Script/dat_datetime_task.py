@@ -22,6 +22,7 @@ segment - an object describing the segment:
 		speed
 """
 from datetime import datetime
+import json
 
 def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 	"""
@@ -33,24 +34,33 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 		cycle: The cycle index
 	"""
 	_now : datetime = datetime.now()
-	
-	# test
-	# op("/project1/main_app").RunPipeline(_now)
+	_preschedule = json.loads(op("/project1/main_app/play_schedule").text)
+
 	if _now.hour >= 17:
+		# - Force night mode
 		op("/project1/main_app").NightMode = True
 	
 	if _now.hour == 19 and _now.minute == 0 and _now.second < 3:
+		# - exhibition closeing task
 		op("/project1/main_app").CallDMXPreset(29)
 
-	if _now.minute == 40 and _now.second < 3:
-		op("/project1/main_app").ReloadPipelineConfig(now = _now)
+	# --
+	if len(_preschedule.keys()) > 0:
+		dtstr: str = "{:%H:%M}".format(_now)
+		if dtstr in _preschedule and _now.second < 3:
+			debug(_preschedule[dtstr])
+			op("/project1/main_app").UpdateRootFolder(_preschedule[dtstr])
+	else:
+		if _now.minute == 40 and _now.second < 3:
+			op("/project1/main_app").ReloadPipelineConfig(now = _now)
 
-	if _now.minute == 45 and _now.second < 3:
-		# TODO: timing
-		op("/project1/main_app").RunPipeline(_now)
+		if _now.minute == 45 and _now.second < 3:
+			# TODO: timing
+			op("/project1/main_app").RunPipeline(_now)
 
-	if _now.minute == 27 and _now.second < 3:
-		# TODO: random pick
-		op("/project1/main_app").UpdateRootFolder(-1)
+		if _now.minute == 27 and _now.second < 3:
+			# TODO: random pick or another method
+			op("/project1/main_app").UpdateRootFolder(-1)
+		# --
 
 	return

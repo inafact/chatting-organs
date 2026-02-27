@@ -183,15 +183,19 @@ class ChattingOrgans:
 		self.oscOut.sendOSC("/scene_start", [ cs ])
 		debug(f"{cs} configs -> {_cam_opacity} | {_imgg_opacity} | {_mtm_length} | {_anext}" )
 
-	def UpdateRootFolder(self, index: int):
+	def UpdateRootFolder(self, indexOrPath: int | str | Path):
 		rf: folderDAT = op("root")
 		sf: folderDAT = op("scenes")
-		if index < 0:
-			# - pick last one
-			path: str = str(rf.cell(rf.numRows - 1, "path"))
+
+		if type(indexOrPath) is str or type(indexOrPath) is Path:
+			path: str = str(indexOrPath)
 		else:
-			path: str = str(rf.cell(index + 1, "path"))
-		
+			if indexOrPath < 0:
+				# - pick last one
+				path: str = str(rf.cell(rf.numRows - 1, "path"))
+			else:
+				path: str = str(rf.cell(indexOrPath + 1, "path"))
+			
 		if path != None and Path(path).exists():
 			if self.currentRootFolderPath != path:
 				self.currentRootFolderPath = path
