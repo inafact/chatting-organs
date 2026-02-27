@@ -228,6 +228,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Text to Speech (Gemini)")
     parser.add_argument("dir", type=Path, help="scene_*.tsvを含むディレクトリ")
     parser.add_argument("--voices", type=str, default="Vindemiatrixw,Zubenelgenubi")
+    parser.add_argument("--config", type=str, default="./app_config.toml")
     args = parser.parse_args()
 
     tsv_files = sorted(args.dir.glob("scene_*.tsv"))
@@ -237,7 +238,7 @@ if __name__ == "__main__":
     dn = ""
     result = []
 
-    with open("./app_config.toml", "rb") as f:
+    with open(args.config, "rb") as f:
       data = tomllib.load(f)
       if "directors_notes" in data:
         print("loading [directors_notes]..")

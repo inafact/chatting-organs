@@ -228,7 +228,8 @@ OSCdef(\init_player, {
 
 
 // ---
-NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs);
+NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs, "./app_config.toml");
+NetAddr("127.0.0.1", 10000).sendMsg(\reload_configs, "./app_config_en.toml");
 NetAddr("127.0.0.1", 10000).sendMsg(\reload_env);
 NetAddr("127.0.0.1", 10000).sendMsg(\run_pipeline);
 
