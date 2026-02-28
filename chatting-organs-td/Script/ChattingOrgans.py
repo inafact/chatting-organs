@@ -97,7 +97,7 @@ class ChattingOrgans:
 		debug("0.9.9", self.currentSceneFilePath)
 		# --
 		op("audiodevout1").par.refresh.pulse()
-		# op("videodevin1").par.refresh.ulse()
+		op("videodevin1").par.refresh.ulse()
 		# --
 		
 	def SCIsReady(self):
@@ -117,9 +117,11 @@ class ChattingOrgans:
 			if "audiodev" in configs.keys():
 				debug(configs["audiodev"])
 				op("audiodevout1").par.device = configs["audiodev"]["device"]
+			if "NearStream CCD30" in op("videodevin1").par.device.menuLabels:
+				vdin_index: int = op("videodevin1").par.device.menuLabels.index("NearStream CCD30")
+				op("videodevin1").par.device = op("videodevin1").par.device.menuNames[vdin_index]
 			if "videodevin" in configs.keys():
 				debug(configs["videodevin"])
-				# op("videodevin1").par.device = configs["videodevin"]["device"]
 				op("videodevin1").par.signalformat = configs["videodevin"]["signalformat"]
 			win1: windowCOMP = op("/window1")
 			win2: windowCOMP = op("/window2")
