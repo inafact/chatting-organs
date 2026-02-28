@@ -59,7 +59,7 @@ def sendMessage(dat: DAT):
 		msg = dat.cell(idx, k)
 		if msg != None and len(str(msg)) > 0:
 			if cs < 5:
-				if k == "drone":
+				if k == "drone" and op("/project1/main_app").OscToDroneIsActive:
 					# -- NOTE: multiple message at once
 					rmsgs = str(dat.cell(idx, k))
 					# debug(k, rmsgs)
@@ -67,7 +67,7 @@ def sendMessage(dat: DAT):
 					for rmsg in rmsgs:
 						oscs.sendOSC(f"/{k}", [rmsg])
 					# -- 
-				if k == "catapult":
+				if k == "catapult" and op("/project1/main_app").OscToCatapultIsActive:
 					msg = dat.cell(idx, k)
 					# debug(k, msg)
 					oscs.sendOSC(f"/{k}", [msg])

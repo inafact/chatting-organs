@@ -52,6 +52,13 @@ class ChattingOrgans:
 		self.NightMode: bool = False
 		self.CurrentTempo: float = 0.5
 		self.AudioReady: bool = False
+		# -- TODO:
+		# self.OscToDroneIsActive: bool = True
+		self.OscToDroneIsActive: bool = False
+		self.OscToCatapultIsActive: bool = True
+		# self.OscForSceneState: bool = True
+		self.OscForSceneState: bool = False
+		# --
 
 		# stored items (persistent across saves and re-initialization):
 		storedItems = [
@@ -181,7 +188,8 @@ class ChattingOrgans:
 			self.CallDMXPreset(29)
 			self.oscOutSound.sendOSC("/silent", [])
 		# --
-		self.oscOut.sendOSC("/scene_start", [ cs ])
+		if self.OscForSceneState:
+			self.oscOut.sendOSC("/scene_start", [ cs ])
 		debug(f"{cs} configs -> {_cam_opacity} | {_imgg_opacity} | {_mtm_length} | {_anext}" )
 
 	def UpdateRootFolder(self, indexOrPath: int | str | Path):
@@ -268,7 +276,8 @@ class ChattingOrgans:
 	def EndScene(self):
 		self.mainTimer.par.play = False
 		sn: int = self.getSceneNumberFromPath()
-		self.oscOut.sendOSC("/scene_end", [ sn ])
+		if self.OscForSceneState:
+			self.oscOut.sendOSC("/scene_end", [ sn ])
 		
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset")
