@@ -38,6 +38,7 @@ class ChattingOrgans:
 		self.sceneList: folderDAT = op("scenes")
 		self.currentScene: tableDAT = op("dialogue_src")
 		self.currentSceneWithHeader: tableDAT = op("dialogue_src_headered")
+		self.currentSceneQueued: tableDAT = op("queued")
 		self.mainTimer: timerCHOP = op("timer_main")
 		self.sceneTimer: timerCHOP = op("timer_scenes")
 		self.oscOut: oscoutDAT = op("oscout_to_external")
@@ -256,6 +257,13 @@ class ChattingOrgans:
 	def GetCurrentScene(self) -> int:
 		# promoted version
 		return self.getSceneNumberFromPath()
+	
+	def IsCurrentSceneProgress(self) -> bool:
+		return (
+			self.currentSceneQueued.numRows != self.currentSceneWithHeader.numRows
+		) and (
+			self.currentSceneQueued.numRows > 0 and self.currentSceneWithHeader.numRows > 0
+		) 
 
 	def EndScene(self):
 		self.mainTimer.par.play = False
@@ -292,9 +300,9 @@ class ChattingOrgans:
 			op("webrender1").par.url = "http://localhost:9000/credit"
 			op("pulse_for_credit").run(0, delayMilliSeconds = 3000)
 			self.clearCurrentScene()
-			dlDMX: textDAT = op("delayDMXPreset")
+			# dlDMX: textDAT = op("delayDMXPreset")
+			# dlDMX.run(0, delayMilliSeconds = (30 * 1000))
 			dlInst: textDAT = op("delayInstallation")
-			dlDMX.run(0, delayMilliSeconds = (30 * 1000))
 			dlInst.run(0, delayMilliSeconds = (30 * 1000))
 
 	def RunPipeline(self, lastRequested: datetime | None = None):	
@@ -355,6 +363,7 @@ class ChattingOrgans:
 			lmv1.par.cuepulse.pulse()
 			op("camera_level").par.opacity = 0
 			op("image_level*").par.opacity = 0
+			self.CallDMXPreset(0)
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/installation", [0.0])
 		else:
