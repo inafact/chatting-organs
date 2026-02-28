@@ -191,6 +191,7 @@ class DirectionPipeline:
                         direction_lighting=cols[7] if len(cols) > 7 else "",
                         direction_drone=cols[8] if len(cols) > 8 else "",
                         direction_catapult=cols[9] if len(cols) > 9 else "",
+                        direction_pause=cols[10] if len(cols) > 10 else "",
                     ))
         return lines
 

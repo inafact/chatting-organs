@@ -48,16 +48,15 @@ class ChattingOrgans:
 		self.pipelineConfigs = ["./app_config.toml", "./app_config_en.toml"]
 	
 		# promoted
-		self.AutoNext: bool = True
-		self.NightMode: bool = False
 		self.CurrentTempo: float = 0.5
 		self.AudioReady: bool = False
+		self.AutoNext: bool = False
+		
 		# -- TODO:
-		# self.OscToDroneIsActive: bool = True
-		self.OscToDroneIsActive: bool = False
-		self.OscToCatapultIsActive: bool = True
-		# self.OscForSceneState: bool = True
-		self.OscForSceneState: bool = False
+		self.NightMode: bool = TDU.Dependency(False)
+		self.OscToDroneIsActive: bool = TDU.Dependency(True)
+		self.OscToCatapultIsActive: bool = TDU.Dependency(True)
+		self.OscForSceneState: bool = TDU.Dependency(True)
 		# --
 
 		# stored items (persistent across saves and re-initialization):
