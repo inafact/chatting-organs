@@ -48,7 +48,8 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 	if len(_preschedule.keys()) > 0:
 		dtstr: str = "{:%H:%M}".format(_now)
 		if dtstr in _preschedule and _now.second < 3:
-			debug(_preschedule[dtstr])
+			# TODO: random pick or another method
+			debug("Found scheduled, ", _preschedule[dtstr])
 			op("/project1/main_app").UpdateRootFolder(_preschedule[dtstr])
 	else:
 		if _now.minute == 40 and _now.second < 3:

@@ -26,8 +26,7 @@ class ChattingOrgans:
 		self.ownerComp = ownerComp
 		
 		# properties
-		TDF.createProperty(self, 'MyProperty', value=0, dependable=True,
-						   readOnly=False)
+		# TDF.createProperty(self, 'CurrentSceneRef', value=-1, dependable=True, readOnly=True)
 
 		# attributes:
 		self.currentRootFolderPath: str = ""
@@ -57,6 +56,10 @@ class ChattingOrgans:
 		self.OscToDroneIsActive: bool = TDU.Dependency(True)
 		self.OscToCatapultIsActive: bool = TDU.Dependency(True)
 		self.OscForSceneState: bool = TDU.Dependency(True)
+		self.CurrentSceneRef: int = TDU.Dependency(-1)
+		# --
+		self.IsInstallationView: TDU.Dependency = TDU.Dependency(True)
+		self.IsInstallationView.callbacks.append(self.InstallationView)
 		# --
 
 		# stored items (persistent across saves and re-initialization):
@@ -87,6 +90,8 @@ class ChattingOrgans:
 		self.currentScene.par.file = ""
 		self.currentScene.clear()
 		self.sceneLineCounter.par.const0value = -1
+		self.mainTimer.par.play = False
+		op("audiofilein1").par.play = False
 
 	def onInitTD(self):
 		"""
@@ -97,7 +102,7 @@ class ChattingOrgans:
 		debug("0.9.9", self.currentSceneFilePath)
 		# --
 		op("audiodevout1").par.refresh.pulse()
-		op("videodevin1").par.refresh.ulse()
+		op("videodevin1").par.refresh.pulse()
 		# --
 		
 	def SCIsReady(self):
@@ -184,6 +189,7 @@ class ChattingOrgans:
 		self.mainTimer.par.start.pulse()
 
 		cs: int = self.getSceneNumberFromPath()
+		self.CurrentSceneRef.val = cs
 		# -- TODO: dark and silence
 		if cs == 5:
 			self.CallDMXPreset(29)
@@ -284,15 +290,21 @@ class ChattingOrgans:
 			dlDMX: textDAT = op("delayDMXPreset")
 			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
 			if self.AutoNext:
+				# -- TODO: confgiurable length ?
+				self.sceneTimer.par.length = 20.0
 				self.sceneTimer.par.play = True
 				self.sceneTimer.par.start.pulse()
 		elif sn == 5:
 			# force to last
+			# -- TODO: confgiurable length
+			self.sceneTimer.par.length = 8.0
 			self.sceneTimer.par.play = True
 			self.sceneTimer.par.start.pulse()			 
 		else:
 			self.CallDMXPreset(60)
 			if self.AutoNext:
+				# -- TODO: confgiurable length
+				self.sceneTimer.par.length = 20.0
 				self.sceneTimer.par.play = True
 				self.sceneTimer.par.start.pulse()
 
@@ -309,9 +321,7 @@ class ChattingOrgans:
 			# -- TODO:
 			op("webrender1").par.url = "http://localhost:9000/credit"
 			op("pulse_for_credit").run(0, delayMilliSeconds = 3000)
-			self.clearCurrentScene()
-			# dlDMX: textDAT = op("delayDMXPreset")
-			# dlDMX.run(0, delayMilliSeconds = (30 * 1000))
+			# self.clearCurrentScene()
 			dlInst: textDAT = op("delayInstallation")
 			dlInst.run(0, delayMilliSeconds = (30 * 1000))
 
@@ -319,14 +329,13 @@ class ChattingOrgans:
 		if lastRequested == None:
 			self.oscOutPipeline.sendOSC("/run_pipeline", [])
 		else:
-			# only accept each hours 
+			# -- only accept each hours 
 			t: str = ":".join(lastRequested.isoformat("_").split(":")[:2])
 			if self.pipelineLastRequested != t:
 				self.oscOutPipeline.sendOSC("/run_pipeline", [])
 				self.pipelineLastRequested = t
 
 	def ReloadPipelineConfig(self, config: str = "", now: datetime | None = None):
-		debug(config, now)
 		if config == "":
 			if now != None:
 				if now.hour % 2 == 0:
@@ -360,13 +369,21 @@ class ChattingOrgans:
 		
 		dmxm.par[f"const{channel.index}value"] = 1
 
-	def InstallationView(self, onoff: bool = True):
+	def InstallationView(self, onoff: bool | dict):
 		lv1 :layermixTOP = op("layermix1")
 		lv2 :layermixTOP = op("layermix2")
 		lmv1: moviefileinTOP = op("loop_archive")
 
-		if onoff:
+		if type(onoff) is bool:
+			_onoff = onoff
+		else:
+			dep = onoff["dependency"]
+			_onoff = bool(int(dep.val))
+		
+		if _onoff:
 			debug("installation")
+			if self.currentScene.numRows > 0:
+				self.clearCurrentScene()
 			lv1.par.lay3bypass = False
 			lv2.par.lay3bypass = False
 			lmv1.par.play = True
@@ -377,10 +394,11 @@ class ChattingOrgans:
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/installation", [0.0])
 		else:
-			debug("show")
+			debug("show ready")
 			lv1.par.lay3bypass = True
 			lv2.par.lay3bypass = True
 			lmv1.par.play = False
+			self.CallDMXPreset(60)
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/silent", [])
 
