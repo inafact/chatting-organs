@@ -58,7 +58,7 @@ class ChattingOrgans:
 		self.OscForSceneState: bool = TDU.Dependency(True)
 		self.CurrentSceneRef: int = TDU.Dependency(-1)
 		# --
-		self.IsInstallationView: TDU.Dependency = TDU.Dependency(True)
+		self.IsInstallationView: TDU.Dependency = TDU.Dependency(False)
 		self.IsInstallationView.callbacks.append(self.InstallationView)
 		# --
 
