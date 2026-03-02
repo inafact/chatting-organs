@@ -398,6 +398,7 @@ class ChattingOrgans:
 			lv1.par.lay3bypass = True
 			lv2.par.lay3bypass = True
 			lmv1.par.play = False
+			self.AutoNext = False
 			self.CallDMXPreset(60)
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/silent", [])
