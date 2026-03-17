@@ -50,6 +50,8 @@ class ChattingOrgans:
 		self.CurrentTempo: float = 0.5
 		self.AudioReady: bool = False
 		self.AutoNext: bool = False
+		self.SpeakerTagForDrone = "<ドローン>"
+		self.SpeakerTagForCatapult = "<カタパルト>"
 		
 		# -- TODO:
 		self.NightMode: bool = TDU.Dependency(False)
@@ -136,7 +138,9 @@ class ChattingOrgans:
 	
 	def ReloadAndPlay(self):
 		op_afin: audiofileinCHOP = op("audiofilein1")
-		op_afin2: audiofileinCHOP = op("audiofilein2")		
+		op_afin2: audiofileinCHOP = op("audiofilein2")
+		op_adev: audiodeviceoutCHOP = op("audiodevout1")
+		op_adev2: audiodeviceoutCHOP = op("audiodevout2")
 
 		if self.currentScene.numRows == 0:
 			first_scene: Cell = self.sceneList.cell(1, "path")
@@ -178,6 +182,10 @@ class ChattingOrgans:
 		op("level3").par.opacity.expr = 'op("trig1")[0]'
 		# --
 
+		if not op_adev.par.active:
+			op_adev.par.active = True
+		if not op_adev2.par.active:
+			op_adev2.par.active = True
 		op_afin.par.play = True
 		op_afin.par.cue = True
 		op_afin2.par.play = True
@@ -279,6 +287,22 @@ class ChattingOrgans:
 		) and (
 			self.currentSceneQueued.numRows > 0 and self.currentSceneWithHeader.numRows > 0
 		) 
+	
+	def IsLastLine(self) -> bool:
+		return (
+			self.currentSceneQueued.numRows > 0 and self.currentSceneWithHeader.numRows > 0
+		) and (
+			(self.currentSceneWithHeader.numRows - self.currentSceneQueued.numRows) == 0
+		)
+	
+	def IsLastLinesBySpeaker(self, speaker: str, size: int = 0) -> bool:
+		cs_o = self.currentSceneWithHeader.rows(speaker)
+		cs_q = self.currentSceneQueued.rows(speaker)
+		return (
+			self.currentSceneQueued.numRows > 0 and self.currentSceneWithHeader.numRows > 0
+		) and (
+			(len(cs_o) - len(cs_q)) <= size
+		)
 
 	def EndScene(self):
 		self.mainTimer.par.play = False
@@ -288,7 +312,8 @@ class ChattingOrgans:
 		
 		if sn  == 4:
 			dlDMX: textDAT = op("delayDMXPreset")
-			dlDMX.run(60, delayMilliSeconds = (20 * 1000))
+			# dlDMX.run(60, delayMilliSeconds = (20 * 1000))
+			dlDMX.run(2, delayMilliSeconds = (15 * 1000))
 			if self.AutoNext:
 				# -- TODO: confgiurable length ?
 				self.sceneTimer.par.length = 20.0
@@ -402,4 +427,8 @@ class ChattingOrgans:
 			self.CallDMXPreset(60)
 			if self.AudioReady:
 				self.oscOutSound.sendOSC("/silent", [])
+
+	def Shutdown(self):
+		debug("self shutdown")
+		project.quit(force=True)
 
