@@ -15,7 +15,7 @@ from pythonosc.udp_client import SimpleUDPClient
 from alignment import AlignmentPipeline
 from direction import DirectionPipeline
 from image_search import ImageSearchPipeline
-from pipeline import DialoguePipeline
+from dialogue import DialoguePipeline
 from tts import TTSPipeline
 from tweaks import TweaksPipeline
 from pipeline_utils import PipelineCancelledError
