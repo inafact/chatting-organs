@@ -293,8 +293,8 @@ def main():
                         help="日本語用設定ファイル (default: app_config.toml)")
     parser.add_argument("--en-config", default="app_config_en.toml", metavar="PATH",
                         help="英語用設定ファイル (default: app_config_en.toml)")
-    parser.add_argument("--max-retries", type=int, default=3, metavar="N",
-                        help="バリデーション失敗時のフル再実行上限 (default: 3)")
+    parser.add_argument("--max-retries", type=int, default=5, metavar="N",
+                        help="バリデーション失敗時のフル再実行上限 (default: 5)")
     parser.add_argument("--no-validate", action="store_true",
                         help="バリデーションをスキップする")
     args = parser.parse_args()
