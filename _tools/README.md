@@ -8,13 +8,13 @@ https://doc.sccode.org/Reference/StartupFile.html
 
 ## Windows
 
-__sartup.scd__ into
+__startup.scd__ into
 
 ```
 ~/AppData/local/SuperCollider
 ```
 
-and, put sound souces into
+and, put soundtrack souces into
 
 ```
 C:/opt/_audio
