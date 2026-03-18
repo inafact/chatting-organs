@@ -31,7 +31,7 @@ CrewAI-based pipeline for generating theatrical dialogue scripts, converting the
 ## Commands
 
 ```bash
-uv run python main.py          # Start OSC server (listens on port 12000)
+uv run python main.py          # Start OSC server (listens on port 10000)
 uv add <package>                # Add dependency
 source .venv/Scripts/activate   # Git Bash on Windows
 ```
@@ -41,11 +41,14 @@ source .venv/Scripts/activate   # Git Bash on Windows
 Each pipeline stage can be run independently via `__main__`:
 
 ```bash
-uv run python tts.py <output_dir>                    # TTS only (reads app_config.toml)
-uv run python alignment.py <output_dir>              # Alignment only
-uv run python image_search.py <output_dir>           # Image search only
-uv run python direction.py <output_dir> [--prompt X] # Direction only
-uv run python credit_generator.py <xlsx>             # Credit HTML generation
+uv run python tts.py <output_dir> [--config X]               # TTS only
+uv run python alignment.py <output_dir> [--config X]         # Alignment only
+uv run python image_search.py <output_dir>                   # Image search only
+uv run python direction.py <output_dir> [--prompt X] [--config X] # Direction only
+uv run python tweaks.py <output_dir>                         # Tweaks only (outputs_tmp→outputs path fix + options JSON)
+uv run python credit_generator.py <xlsx>                     # Credit HTML generation
+uv run python validation.py <output_dir> [--locale ja|en]   # Validate existing output dir
+uv run python generate_schedule.py [--weekday|--weekend] [--output PATH] [--ja-config PATH] [--en-config PATH] [--max-retries N] [--no-validate]  # Batch generation with schedule
 ```
 
 ### OSC Messages
@@ -79,7 +82,7 @@ GEMINI_TTS_MODEL=gemini-2.5-flash-tts  # optional
 GEMINI_TTS_MAX_CHUNK_BYTES=5000 # optional, chunk size for TTS input
 TEMPERATURE=0.8                 # optional
 OSC_RECV_HOST=0.0.0.0           # optional, OSC server bind address
-OSC_RECV_PORT=12000             # optional, OSC server port
+OSC_RECV_PORT=10000             # optional, OSC server port
 PLAYER_OSC_ADDR=127.0.0.1      # optional, player OSC target address
 PLAYER_OSC_PORT=10001           # optional, player OSC target port
 ```
@@ -88,19 +91,25 @@ PLAYER_OSC_PORT=10001           # optional, player OSC target port
 
 ```
 main.py            OSC server + PipelineManager (orchestrates all stages, background thread)
-pipeline.py        DialoguePipeline (CrewAI planner+writer+translator agents -> TSV)
+dialogue.py        DialoguePipeline (CrewAI planner+writer+translator agents -> TSV)
 tts.py             TTSPipeline (TSV -> Gemini multi-speaker TTS -> WAV)
 alignment.py       AlignmentPipeline (WAV+TSV -> ElevenLabs Forced Alignment -> aligned TSV + split WAVs)
 image_search.py    ImageSearchPipeline (aligned TSV + images/ -> OpenCLIP semantic matching -> image-ref TSV)
 direction.py       DirectionPipeline (aligned TSV + direction prompt -> CrewAI director agent -> 演出指示付き TSV)
+tweaks.py          TweaksPipeline (final pass: outputs_tmp→outputs path fix + direction_pause col + options JSON)
+validation.py      Validator (output_dir -> ValidationResult; checks line_count / audio_duration / direction_tags)
+generate_schedule.py  Batch generation with schedule JSON output; inline validation + partial retries
 pipeline_utils.py  call_with_retry (exponential backoff) + PipelineCancelledError + extract_scene_number
-models.py          Pydantic models: DialogueLine(+line_en), AlignedLine(+line_en, +reference_image_path, +direction_*), SceneResult
-app_config.toml    Runtime config: main_locale + render_scenes + directors_notes + image_search + direction
+models.py          Pydantic models: DialogueLine(+line_en), AlignedLine(+line_en, +reference_image_path, +direction_*, +direction_pause), SceneResult
+app_config.toml    Runtime config (ja): main_locale + render_scenes + directors_notes + image_search + direction
+app_config_en.toml Runtime config (en): same structure, main_locale = "en"
 prompt_example.txt Input prompt (read at runtime)
 direction_prompt_example.txt Direction prompt (演出指示生成用プロンプト, read at runtime)
 images/            Curated image assets for semantic matching (jpg, png, etc.)
 credit_generator.py  CreditGenerator (Excel "credit" column -> 2-column HTML tables with auto-cycling JS)
-outputs/<timestamp>/ Generated TSV + WAV + direction CSV files (gitignored)
+outputs_tmp/<timestamp>_<locale>/ Pipeline working directory (gitignored)
+outputs/<timestamp>_<locale>/     Renamed from outputs_tmp at pipeline completion (gitignored)
+schedule.json      Generated schedule: {"HH:MM": "outputs/<timestamp>_<locale>", ...}
 ```
 
 ### Full Pipeline Flow
@@ -134,14 +143,19 @@ prompt_example.txt + app_config.toml
   DirectionPipeline -- CrewAI director agent (direction_prompt_example.txt + dialogue)
        |
   scene_N_direction.csv  -- CrewAI raw output (debug/reference)
-  scene_N_aligned.tsv    -- +direction_sound<TAB>direction_lighting<TAB>direction_drone<TAB>direction_catapult[<TAB>options_json]
+  scene_N_aligned.tsv    -- +direction_sound<TAB>direction_lighting<TAB>direction_drone<TAB>direction_catapult<TAB>direction_pause
+       |
+  TweaksPipeline   -- outputs_tmp→outputs path fix in stem_file_path, options JSON append
+       |
+  scene_N_aligned.tsv    -- stem_file_path uses outputs/ dir; 12-column when scene has options (+ JSON on first row)
+  [dir renamed: outputs_tmp/<ts>/ → outputs/<ts>/]
 ```
 
 ### Key Constraints
 
 - Scenes generated **sequentially** (each depends on prior context)
 - Scene definitions (label, setting, length, options) are configurable via `app_config.toml` `[render_scenes]`
-  - `options` dict per scene: `tempo`, `camera`, etc. — serialized as JSON in final TSV's 11th column (first row only)
+  - `options` dict per scene: `tempo`, `camera`, etc. — serialized as JSON in final TSV's 12th column (first row only)
 - `main_locale` in `app_config.toml`: controls TTS and alignment language (`"ja"` or `"en"`)
   - `"ja"` (default): TTS uses Japanese lines, alignment uses Japanese text
   - `"en"`: TTS uses `line_en`, alignment uses `line_en`
@@ -157,8 +171,8 @@ prompt_example.txt + app_config.toml
   - Dialogue TSV: 3-column (`speaker\tline\tline_en`)
   - Aligned TSV: 5-column (+ `start_time\tstem_file_path`)
   - Image-ref TSV: 6-column (+ `reference_image_path`)
-  - Direction TSV: 10-column (+ `direction_sound\tdirection_lighting\tdirection_drone\tdirection_catapult`)
-  - Final TSV: 11-column when scene has `options` (+ JSON options on first row only)
+  - Direction TSV: 11-column (+ `direction_sound\tdirection_lighting\tdirection_drone\tdirection_catapult\tdirection_pause`)
+  - Final TSV: 12-column when scene has `options` (+ JSON options on first row only); TweaksPipeline also rewrites `stem_file_path` from `outputs_tmp/` → `outputs/`
 - TTS/Alignment pipelines read `line_en` from TSV and pass it through
 - Image search is configurable via `app_config.toml` (`[image_search]` section):
   - `enabled`: bool
@@ -171,20 +185,42 @@ prompt_example.txt + app_config.toml
 - When multiple images exceed the similarity threshold, selection depends on choice mode
 - Direction generation is configurable via `app_config.toml` (`[direction]` section): `enabled`, `prompt_path` (default `direction_prompt_example.txt`)
 - DirectionPipeline uses a single CrewAI "演出家" agent; LLM model shared with DialoguePipeline via `GEMINI_LLM_MODEL` env var
-- Direction CSV format: `[scene-line],[tag],[instruction],[param]` — tags are `/sound`, `/lighting`, `/drone`, `/catapult` (slash-prefixed)
+- Direction CSV format: `[scene-line],[tag],[instruction],[param]` — tags are `/sound`, `/lighting`, `/drone`, `/catapult`, `/pause` (slash-prefixed)
 - Direction values in TSV: `指示番号:パラメータ` space-separated for multiple entries per line; empty string if no direction
 - Malformed CSV rows from LLM are skipped with warnings (graceful degradation)
 - `scenes_info` (from `render_scenes`) is passed to ImageSearchPipeline and DirectionPipeline for per-scene configuration
 - `credit_generator.py` is a standalone utility: reads `credit` column from Excel → deduplicates, sorts (numbers → A–Z → あいうえお), pairs into 2-column rows → splits into multiple `<table id="table-{n}">` elements (max 25 rows each) → outputs HTML with auto-cycling JS (shows one table at a time, rotates every 3 s); dark background, Google Fonts
 
+### Validation (`validation.py`)
+
+`Validator` performs three checks on a completed `outputs/<timestamp>_<locale>/` directory:
+
+| Check | Timing in generate_schedule.py | Error condition | Retry action |
+|---|---|---|---|
+| `line_count` | After DialoguePipeline | `line_en` empty in `scene_N.tsv` | セリフ再生成 (全シーン) |
+| `audio_duration` | After AlignmentPipeline | duration < 0.2s, duration > 45s, or cps > 25字/秒 | `*.wav` + `*_aligned.tsv` 削除 → TTS から再実行 |
+| `direction_tags` | After TweaksPipeline | VALID_TAGS 外のタグ or 列数不足 in `scene_N_direction.csv` | direction + tweaks のみ再実行 |
+
+- `ValidationResult.has_errors` / `error_checks()` / `scenes_with_errors()` でエラー種別を取得可能
+- `--no-validate` フラグでバリデーションをスキップ可能
+
+### Schedule Generation (`generate_schedule.py`)
+
+- スロット構成: 11:25〜18:25 毎時25分、奇数時=ja、偶数時=en
+  - 平日: 11・12時スキップ → ja×3 + en×3 = 計6回生成
+  - 休日: 全8枠 → ja×4 + en×4 = 計8回生成
+- 各スロットに異なる出力を割り当て (round-robin なし)
+- `--ja-config` / `--en-config` で言語ごとに別の `app_config.toml` を指定可能
+- 出力 `schedule.json`: `{"HH:MM": "<絶対パス>", ...}` 形式
+
 ### Error Handling & Cancellation
 
 - Pipeline runs in a **background `threading.Thread`** (daemon); OSC server remains responsive during execution
 - All cloud API calls are wrapped with `call_with_retry()` (exponential backoff, defined in `pipeline_utils.py`)
-  - Gemini TTS (`tts.py`): `max_retries=3`, `base_delay=3.0s`, retries on `ServerError`/`ConnectionError`/`TimeoutError`
+  - Gemini TTS (`tts.py`): `max_retries=3`, `base_delay=3.0s`, retries on `ServerError`/`ConnectionError`/`TimeoutError`/`ValueError` (空レスポンス含む)
   - ElevenLabs (`alignment.py`): `max_retries=3`, `base_delay=3.0s`, retries on `ApiError`/`ConnectionError`/`TimeoutError`
-  - CrewAI (`pipeline.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (CrewAI wraps errors variably)
-  - CrewAI (`direction.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (same as pipeline.py)
+  - CrewAI (`dialogue.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (CrewAI wraps errors variably)
+  - CrewAI (`direction.py`): `max_retries=2`, `base_delay=5.0s`, retries on `Exception` (same as dialogue.py)
 - Cancellation via `threading.Event` passed to all pipeline constructors as `cancel_event`
   - Checked at: top of each scene/chunk loop, between pipeline stages in `main.py`
   - Retry backoff uses `cancel_event.wait(timeout=delay)` for instant cancellation during waits

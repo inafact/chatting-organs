@@ -191,6 +191,7 @@ class DirectionPipeline:
                         direction_lighting=cols[7] if len(cols) > 7 else "",
                         direction_drone=cols[8] if len(cols) > 8 else "",
                         direction_catapult=cols[9] if len(cols) > 9 else "",
+                        direction_pause=cols[10] if len(cols) > 10 else "",
                     ))
         return lines
 
@@ -259,11 +260,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Direction Pipeline (CrewAI)")
     parser.add_argument("dir", type=Path, help="*_aligned.tsv を含むディレクトリ")
     parser.add_argument("--prompt", type=str, default="direction_prompt_example.txt")
+    parser.add_argument("--config", type=str, default="./app_config.toml")
     args = parser.parse_args()
 
     scenes_info = dict()
 
-    with open("./app_config.toml", "rb") as f:
+    with open(args.config, "rb") as f:
         data = tomllib.load(f)
         if "render_scenes" in data:
             print("loading [render_scenes]..")

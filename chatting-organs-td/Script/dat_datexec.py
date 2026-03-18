@@ -29,24 +29,6 @@ from typing import List
 def onTableChange(dat: DAT, prevDAT: DAT, info: ChangedDATInfo):
 	return
 
-def mapToDMX(chan: int | list):
-	dmxm: constantCHOP = op("dmxmap")
-	if chan > 60:
-		_idx = max(0, chan - 1)
-	else:
-		_idx = max(0, chan - 1)
-		if op("/project1/main_app").NightMode:
-			debug("NightMode active")
-			_idx = _idx + 30	
-	channel: Channel = dmxm.chan(_idx)
-	if channel != None:
-		# print(channel, channel.name, channel.index)
-		for i in range(dmxm.numChans):
-			_channel: Channel = dmxm.chan(i)
-			if _channel != None and i != channel.index:
-				dmxm.par[f"const{_channel.index}value"] = 0
-		dmxm.par[f"const{channel.index}value"] = 1
-
 def sendMessage(dat: DAT):
 	oscs: oscoutDAT = op("oscout_to_external")
 	oscm: oscoutDAT = op("oscout_to_sound")
@@ -59,7 +41,7 @@ def sendMessage(dat: DAT):
 		msg = dat.cell(idx, k)
 		if msg != None and len(str(msg)) > 0:
 			if cs < 5:
-				if k == "drone":
+				if k == "drone" and op("/project1/main_app").OscToDroneIsActive:
 					# -- NOTE: multiple message at once
 					rmsgs = str(dat.cell(idx, k))
 					# debug(k, rmsgs)
@@ -67,14 +49,13 @@ def sendMessage(dat: DAT):
 					for rmsg in rmsgs:
 						oscs.sendOSC(f"/{k}", [rmsg])
 					# -- 
-				if k == "catapult":
+				if k == "catapult" and op("/project1/main_app").OscToCatapultIsActive:
 					msg = dat.cell(idx, k)
 					# debug(k, msg)
 					oscs.sendOSC(f"/{k}", [msg])
 				if k == "lighting":
 					msg = dat.cell(idx, k)
 					op("/project1/main_app").CallDMXPreset(int(msg) - 1)
-					# mapToDMX(int(msg))
 			if k == "sound":
 				oscm.sendOSC(f"/{k}", [dat.cell(idx, k)])
 		
@@ -104,25 +85,21 @@ def onSizeChange(dat: DAT):
 			else:
 				delay = 0	
 		
-		# debug("delay ", delay)
-
 		afin1: audiofileinCHOP = op("audiofilein1")
 		afin2: audiofileinCHOP = op("audiofilein2")
-		# trig1: triggerCHOP = op("trig1")
-		# trig2: triggerCHOP = op("trig2")
 		imm: baseCOMP = op("img_manager")
 		imm2: baseCOMP = op("img_manager2")
 		pp1: textDAT = op("pulse1")
 		pp2: textDAT = op("pulse2")
+		op_main: baseCOMP = op("/project1/main_app")
 
-		if speaker == "<ドローン>":
+		if speaker == op_main.SpeakerTagForDrone:
+			if op_main.GetCurrentScene() == 4 and op_main.IsLastLinesBySpeaker(speaker, 0):
+				adev: audiodeviceoutCHOP = op("audiodevout1")
+				adev.par.active = False
 			afin1.par.file = audio
-			# -- delay
+			# -- w/delay
 			pp1.run(delayMilliSeconds = delay)
-			# afin1.par.cue = False
-			# afin1.par.cue.pulse()
-			# trig1.par.trigger.pulse()
-			# --
 			t_cell: Cell = ws_ref.findCell("/?speaker=drone", cols=["label"])
 			if t_cell != None:
 				ds: baseCOMP = op("dispatcher")
@@ -134,13 +111,12 @@ def onSizeChange(dat: DAT):
 			if img:
 				imm.par.Reffile = audio
 		else:
+			if op_main.GetCurrentScene() == 4 and op_main.IsLastLinesBySpeaker(speaker, 0):
+				adev: audiodeviceoutCHOP = op("audiodevout2")
+				adev.par.active = False
 			afin2.par.file = audio
-			# -- delay
-			# afin2.par.cue = False
-			# afin2.par.cue.pulse()
-			# trig2.par.trigger.pulse()
+			# -- w/delay
 			pp2.run(delayMilliSeconds = delay)
-			# --
 			t_cell: Cell = ws_ref.findCell("/?speaker=catapult", cols=["label"])
 			if t_cell != None:
 				ds: baseCOMP = op("dispatcher2")

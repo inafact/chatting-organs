@@ -131,22 +131,33 @@ class TTSPipeline:
             speech_config=self._build_speech_config(),
         )
 
-        response = call_with_retry(
-            self.client.models.generate_content,
-            model=self.model,
-            contents=contents,
-            config=config,
+        def _call() -> bytes:
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=config,
+            )
+            candidates = response.candidates
+            if (
+                not candidates
+                or not candidates[0].content
+                or not candidates[0].content.parts
+            ):
+                finish_reason = candidates[0].finish_reason if candidates else "no candidates"
+                raise ValueError(f"Empty Gemini TTS response (finish_reason={finish_reason})")
+            raw = candidates[0].content.parts[0].inline_data.data
+            # SDK は通常 bytes を返すが、文字列(base64)の場合もデコード
+            if isinstance(raw, str):
+                raw = base64.b64decode(raw)
+            return raw
+
+        return call_with_retry(
+            _call,
             max_retries=3,
             base_delay=3.0,
-            retryable_exceptions=(GeminiServerError, ConnectionError, TimeoutError),
+            retryable_exceptions=(GeminiServerError, ConnectionError, TimeoutError, ValueError),
             cancel_event=self.cancel_event,
         )
-
-        data = response.candidates[0].content.parts[0].inline_data.data
-        # SDK は通常 bytes を返すが、文字列(base64)の場合もデコード
-        if isinstance(data, str):
-            data = base64.b64decode(data)
-        return data
 
     # ------------------------------------------------------------------ #
     #  WAV 保存

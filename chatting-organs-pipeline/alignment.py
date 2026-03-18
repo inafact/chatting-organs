@@ -187,13 +187,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Forced Alignment (ElevenLabs)")
     parser.add_argument("dir", type=Path, help="scene_*.tsv と scene_*.wav を含むディレクトリ")
+    parser.add_argument("--config", type=str, default="./app_config.toml")
     args = parser.parse_args()
 
     tsv_files = sorted(args.dir.glob("scene_*.tsv"))
     wav_files = sorted(args.dir.glob("scene_*.wav"))
     main_locale = "ja"
 
-    with open("./app_config.toml", "rb") as f:
+    with open(args.config, "rb") as f:
       data = tomllib.load(f)
       if "main_locale" in data:
         print("loading [main_locale]..")

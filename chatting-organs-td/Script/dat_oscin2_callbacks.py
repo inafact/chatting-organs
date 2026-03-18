@@ -54,10 +54,9 @@ def onReceiveOSC(dat: oscinDAT, rowIndex: int, message: str,
 		cmd = int(args[-1])
 		debug("cmd", cmd)
 		if cmd == 0:
-			op("/project1/main_app").InstallationView(False)
-			op("/project1/main_app").CallDMXPreset(60)
+			op("/project1/main_app").IsInstallationView.val = False
 		else:
-			if cmd != op("/project1/main_app").GetCurrentScene():
+			if (cmd != op("/project1/main_app").GetCurrentScene()) and (not op("/project1/main_app").IsCurrentSceneProgress()) and (not op("/project1/main_app").AutoNext):
 				op("/project1/main_app").NextScene()
 	if address == "/next_scene":
 		op("/project1/main_app").NextScene()

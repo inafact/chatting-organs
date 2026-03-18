@@ -23,7 +23,7 @@ directors_notes = [
   '''
     ### DIRECTOR'S NOTES
 
-    Pacing: Speak in an excited tone and at a fast pace.
+    Pacing: Speak at a fast pace, with excited tone
 
     If the line ends with an exclamation mark or some exclamation marks at the end of the sentence, use an angry, growling tone.
     ''',
@@ -34,7 +34,7 @@ directors_notes = [
   '''
     ### DIRECTOR'S NOTES
 
-    Pacing: Speaks at a very fast pace, without emotion
+    Pacing: Speaks at a fast pace, without emotion
     '''
 ]
 
@@ -45,9 +45,9 @@ directors_notes = [
 # 4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1800, "options" = { "autonext" = false } }
 ##
 1 = { "label" = "導入", "setting" = "東京・丸の内アートセンター「BUG」", "length" = 950, "options" = { "tempo" = 1.5, "autonext" = false } }
-2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1550, "options" = { "autonext" = false} }
+2 = { "label"= "登場人物紹介、来歴詳述", "setting"= "ロシアによって占拠されたウクライナの地域", "length"= 1500, "options" = { "autonext" = false} }
 3 = { "label"= "対立の明確化と概念の深化", "setting"= "沖縄アメリカ軍基地前", "length"= 1550, "options" = { "autonext" = false } }
-4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1550, "options" = { "tempo" = 0.1, "autonext" = false } }
+4 = { "label"= "激論と分断、決裂、カタルシスとしての暴力可視化", "setting"= "東京・丸の内アートセンター「BUG」", "length"= 1500, "options" = { "tempo" = 0.1, "autonext" = false } }
 5 = { "label"= "システム・フィードバックとしての終幕", "setting"= "生成AIサービスプロンプト実行後の画面", "length"= 350, "options" = { "camera" = false, "tempo" = 0.5, "autonext" = false } }
 
 [image_search]

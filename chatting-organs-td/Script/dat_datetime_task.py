@@ -38,19 +38,25 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 
 	if _now.hour >= 17:
 		# - Force night mode
-		op("/project1/main_app").NightMode = True
+		op("/project1/main_app").NightMode.val = True
 	
 	if _now.hour == 19 and _now.minute == 0 and _now.second < 3:
-		# - exhibition closeing task
+		# - exhibition closing task
 		op("/project1/main_app").CallDMXPreset(29)
 
-	# --
+	if _now.hour == 23 and _now.minute == 59 and _now.second > 58:
+		# - self shutdown
+		op("/project1/main_app").Shutdown()
+
 	if len(_preschedule.keys()) > 0:
+		# -- scheduled:
 		dtstr: str = "{:%H:%M}".format(_now)
 		if dtstr in _preschedule and _now.second < 3:
-			debug(_preschedule[dtstr])
+			# TODO: random pick or another method
+			debug("Found scheduled, ", _preschedule[dtstr])
 			op("/project1/main_app").UpdateRootFolder(_preschedule[dtstr])
 	else:
+		# -- ad-hoc, TODO:
 		if _now.minute == 40 and _now.second < 3:
 			op("/project1/main_app").ReloadPipelineConfig(now = _now)
 
@@ -58,9 +64,7 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 			# TODO: timing
 			op("/project1/main_app").RunPipeline(_now)
 
-		if _now.minute == 27 and _now.second < 3:
-			# TODO: random pick or another method
-			op("/project1/main_app").UpdateRootFolder(-1)
-		# --
+		# if _now.minute == 27 and _now.second < 3:
+		#	op("/project1/main_app").UpdateRootFolder(-1)
 
 	return

@@ -235,6 +235,10 @@ NetAddr("127.0.0.1", 10000).sendMsg(\run_pipeline);
 
 NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 0);
 NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 1);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 2);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 3);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 4);
+NetAddr("127.0.0.1", 10001).sendMsg(\scene_start, 5);
 
 OSCdef(\test0, { |msg, time, addr, recvPort|
 	"/catapult ".post; time.postln;

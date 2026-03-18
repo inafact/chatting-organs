@@ -16,3 +16,5 @@ wheels/
 output_*/
 output/
 outputs/
+outputs_tmp/
+schedule.json
