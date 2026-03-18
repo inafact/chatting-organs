@@ -8,8 +8,8 @@ A Python application to generate script dialogues, audio files, other metadata f
 
 ## chatting-organs-td
 
-A TouchDesigner application to playback generated data and to handle I/O (e.g. video device input, ArtNet / DMX, OSC).
+A TouchDesigner application to playback generated data and handle I/O (e.g. video device input, ArtNet / DMX, OSC).
 
 ## _tools
 
-Some other staffs: [SuperCollider](https://github.com/supercollider/supercollider) and PureData ([PlugData](https://github.com/plugdata-team/plugdata)) files to playback and manipulate non-generated audio souces
+Some other staffs: [SuperCollider](https://github.com/supercollider/supercollider) and PureData ([PlugData](https://github.com/plugdata-team/plugdata)) files to playback and manipulate non-generated audio soucres.
