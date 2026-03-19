@@ -1,0 +1,139 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="YhnAAgKK4otVkT83-1Fu" name="ページ-1">
+    <mxGraphModel dx="2211" dy="1542" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=center;" value="パイプライン処理フロー (generate_schedule.py)" vertex="1">
+          <mxGeometry height="30" width="360" x="130" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="パイプラインステージ" vertex="1">
+          <mxGeometry height="30" width="150" x="640" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="バリデーション" vertex="1">
+          <mxGeometry height="45" width="150" x="640" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=10;fontColor=#333333;" value="オプション (if enabled)" vertex="1">
+          <mxGeometry height="30" width="150" x="640" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="成果物ファイル" vertex="1">
+          <mxGeometry height="30" width="150" x="640" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="text;html=1;fontSize=10;fontColor=#ae4132;strokeColor=#ae4132;dashed=1;align=left;" value="エラー時リトライ" vertex="1">
+          <mxGeometry height="20" width="150" x="640" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="n_input" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" value="&lt;b&gt;入力ファイル&lt;/b&gt;&lt;br&gt;prompt_example.txt + app_config.toml" vertex="1">
+          <mxGeometry height="50" width="280" x="130" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="n_dialogue" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;DialoguePipeline&lt;/b&gt;&lt;br&gt;planner → writer → translator (Gemini via CrewAI)" vertex="1">
+          <mxGeometry height="55" width="280" x="130" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="f_tsv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="scene_N.tsv" vertex="1">
+          <mxGeometry height="30" width="160" x="450" y="112.5" as="geometry" />
+        </mxCell>
+        <mxCell id="v_linecount" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;check_line_counts&lt;/b&gt;&lt;br&gt;line_en 空欄チェック" vertex="1">
+          <mxGeometry height="65" width="280" x="130" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="n_tts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;TTSPipeline&lt;/b&gt;&lt;br&gt;Gemini multi-speaker TTS" vertex="1">
+          <mxGeometry height="55" width="280" x="130" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="f_wav" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="scene_N.wav (PCM 24kHz)" vertex="1">
+          <mxGeometry height="30" width="160" x="450" y="322.5" as="geometry" />
+        </mxCell>
+        <mxCell id="n_alignment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;AlignmentPipeline&lt;/b&gt;&lt;br&gt;ElevenLabs Forced Alignment + split WAV" vertex="1">
+          <mxGeometry height="55" width="280" x="130" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="f_aligned" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="scene_N_aligned.tsv&lt;br&gt;scene_N_{offset}.wav" vertex="1">
+          <mxGeometry height="40" width="160" x="450" y="417.5" as="geometry" />
+        </mxCell>
+        <mxCell id="v_audio" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;check_audio_durations&lt;/b&gt;&lt;br&gt;音声長チェック (0.2s〜45s / 25字/秒)" vertex="1">
+          <mxGeometry height="65" width="280" x="130" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="n_imgsearch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=11;fontColor=#333333;" value="&lt;b&gt;ImageSearchPipeline&lt;/b&gt; (if enabled)&lt;br&gt;OpenCLIP (run on local PC) semantic matching" vertex="1">
+          <mxGeometry height="50" width="280" x="130" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="n_direction" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=11;fontColor=#333333;" value="&lt;b&gt;DirectionPipeline&lt;/b&gt; (if enabled)&lt;br&gt;Gemini via CrewAI 演出家 agent" vertex="1">
+          <mxGeometry height="50" width="280" x="130" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="n_tweaks" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;TweaksPipeline&lt;/b&gt;&lt;br&gt;path修正 + outputs_tmp → outputs リネーム" vertex="1">
+          <mxGeometry height="55" width="280" x="130" y="795" as="geometry" />
+        </mxCell>
+        <mxCell id="v_dirtags" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;check_direction_tags&lt;/b&gt; (if enabled)&lt;br&gt;無効タグチェック" vertex="1">
+          <mxGeometry height="65" width="280" x="130" y="895" as="geometry" />
+        </mxCell>
+        <mxCell id="n_output" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="&lt;b&gt;outputs/timestamp_locale/&lt;/b&gt;&lt;br&gt;scene_N_aligned.tsv (最終 11/12列)" vertex="1">
+          <mxGeometry height="50" width="280" x="130" y="1005" as="geometry" />
+        </mxCell>
+        <mxCell id="f_schedule" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="schedule.json&lt;br&gt;{&quot;HH:MM&quot;: &quot;/絶対パス/...&quot;}" vertex="1">
+          <mxGeometry height="35" width="160" x="450" y="1012.5" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="n_input" style="edgeStyle=orthogonalEdgeStyle;" target="n_dialogue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="n_dialogue" style="edgeStyle=orthogonalEdgeStyle;" target="v_linecount">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="v_linecount" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="n_tts" value="OK">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="n_tts" style="edgeStyle=orthogonalEdgeStyle;" target="n_alignment">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="n_alignment" style="edgeStyle=orthogonalEdgeStyle;" target="v_audio">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="v_audio" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="n_imgsearch" value="OK">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="n_imgsearch" style="edgeStyle=orthogonalEdgeStyle;" target="n_direction">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="n_direction" style="edgeStyle=orthogonalEdgeStyle;" target="n_tweaks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="n_tweaks" style="edgeStyle=orthogonalEdgeStyle;" target="v_dirtags">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="v_dirtags" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="n_output" value="OK">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef1" edge="1" parent="1" source="n_dialogue" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_tsv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef2" edge="1" parent="1" source="n_tts" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_wav">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef3" edge="1" parent="1" source="n_alignment" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_aligned">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef4" edge="1" parent="1" source="n_output" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_schedule">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="er1" edge="1" parent="1" source="v_linecount" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#ae4132;fontColor=#ae4132;fontSize=9;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_dialogue" value="エラー: 再生成">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="232" />
+              <mxPoint x="60" y="127" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="er2" edge="1" parent="1" source="v_audio" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#ae4132;fontColor=#ae4132;fontSize=9;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_tts" value="エラー: WAV削除→TTS再実行">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="547" />
+              <mxPoint x="50" y="337" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="er3" edge="1" parent="1" source="v_dirtags" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#ae4132;fontColor=#ae4132;fontSize=9;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_direction" value="エラー: direction再実行">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="927" />
+              <mxPoint x="60" y="735" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

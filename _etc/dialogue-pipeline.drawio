@@ -1,0 +1,158 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="9ZlRJG63Gtl_cvv7sIvi" name="ページ-1">
+    <mxGraphModel dx="2317" dy="1641" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=15;fontStyle=1;align=center;" value="DialoguePipeline 処理フロー" vertex="1">
+          <mxGeometry height="25" width="440" x="80" y="-25" as="geometry" />
+        </mxCell>
+        <mxCell id="n_prompt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" value="&lt;b&gt;prompt_example.txt&lt;/b&gt;" vertex="1">
+          <mxGeometry height="40" width="210" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="n_config" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" value="&lt;b&gt;app_config.toml&lt;/b&gt;&lt;br&gt;各種設定オプション用のファイル" vertex="1">
+          <mxGeometry height="40" width="210" x="355" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="loop_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;dashed=1;opacity=60;pointerEvents=0;fontSize=12;fontStyle=1;verticalAlign=top;" value="for scene_num in render_scenes　(順次実行)" vertex="1">
+          <mxGeometry height="700" width="610" x="10" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="n_prev_ctx" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" value="前シーンの対話テキスト (generated_scenes)" vertex="1">
+          <mxGeometry height="35" width="240" x="40" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="n_scene_info" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" value="シーン情報 (label / setting / length / 乱数シード)" vertex="1">
+          <mxGeometry height="35" width="265" x="327.5" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="crew_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=50;pointerEvents=0;fontSize=11;fontStyle=1;verticalAlign=top;" value="CrewAI Crew (sequential)" vertex="1">
+          <mxGeometry height="265" width="410" x="40" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="n_planner" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;Planner agent (シーン設計者)&lt;/b&gt;&lt;br&gt;制約・議題プール抽出、制作指示書作成" vertex="1">
+          <mxGeometry height="55" width="390" x="50" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="f_planner_md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="指示書.md&lt;br&gt;(中間生成ファイル)" vertex="1">
+          <mxGeometry height="35" width="130" x="480" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="n_writer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;Writer agent (演劇脚本家)&lt;/b&gt;&lt;br&gt;対話セリフ生成 (約 N 字) → raw_ja" vertex="1">
+          <mxGeometry height="55" width="390" x="50" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="f_writer_md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="セリフ.md&lt;br&gt;(中間生成ファイル)" vertex="1">
+          <mxGeometry height="35" width="130" x="480" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="n_translator" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;Translator agent (翻訳者)&lt;/b&gt;&lt;br&gt;日英翻訳 → raw_en (行数を原文と一致)" vertex="1">
+          <mxGeometry height="55" width="390" x="50" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="f_trans_md" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="翻訳.md&lt;br&gt;(中間生成ファイル)" vertex="1">
+          <mxGeometry height="35" width="130" x="480" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="n_parse_ja" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="parse_lines(raw_ja)&lt;br&gt;→ list[DialogueLine]" vertex="1">
+          <mxGeometry height="45" width="190" x="40" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="n_parse_en" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="parse_lines(raw_en)&lt;br&gt;→ list[DialogueLine]" vertex="1">
+          <mxGeometry height="45" width="190" x="250" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="regex_note" parent="1" style="text;html=1;fontSize=9;fontColor=#888888;align=center;" value="regex: (ドローン)：... / (カタパルト)：..." vertex="1">
+          <mxGeometry height="18" width="400" x="240" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="n_zip" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&lt;b&gt;zip(parsed_ja, parsed_en)&lt;/b&gt;&lt;br&gt;行数不一致 → line_en = &quot;&quot; (デフォルト、エラー判定にすすむ)" vertex="1">
+          <mxGeometry height="50" width="370" x="50" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n_tsv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="&lt;b&gt;scene_N.tsv&lt;/b&gt;&lt;br&gt;speaker | line | line_en" vertex="1">
+          <mxGeometry height="45" width="280" x="95" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="n_store" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" value="generated_scenes に raw_ja を追加&lt;br&gt;(次シーンの Planner / Writer へのコンテキスト)" vertex="1">
+          <mxGeometry height="45" width="380" x="45" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="n_results" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;" value="list[SceneResult]" vertex="1">
+          <mxGeometry height="40" width="200" x="135" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="e_prompt" edge="1" parent="1" source="n_prompt" style="edgeStyle=orthogonalEdgeStyle;" target="n_planner">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="30" />
+              <mxPoint y="238" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_config_scene" edge="1" parent="1" source="n_config" style="edgeStyle=orthogonalEdgeStyle;" target="n_scene_info">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_scene_planner" edge="1" parent="1" source="n_scene_info" style="edgeStyle=orthogonalEdgeStyle;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="n_planner">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_prev_planner" edge="1" parent="1" source="n_prev_ctx" style="edgeStyle=orthogonalEdgeStyle;" target="crew_bg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_prev_writer" edge="1" parent="1" source="n_prev_ctx" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#d6b656;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" target="n_writer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="160" />
+              <mxPoint x="20" y="160" />
+              <mxPoint x="20" y="285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_planner_writer" edge="1" parent="1" source="n_planner" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;labelBackgroundColor=#ffffff;" target="n_writer" value="">
+          <mxGeometry relative="1" y="25" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_writer_trans" edge="1" parent="1" source="n_writer" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;labelBackgroundColor=#ffffff;" target="n_translator" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_planner_md" edge="1" parent="1" source="n_planner" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_planner_md">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_writer_md" edge="1" parent="1" source="n_writer" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_writer_md">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_trans_md" edge="1" parent="1" source="n_translator" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f_trans_md">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_writer_parse" edge="1" parent="1" source="n_writer" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;labelBackgroundColor=#ffffff;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n_parse_ja" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="20" y="340" />
+              <mxPoint x="20" y="440" />
+              <mxPoint x="135" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_trans_parse" edge="1" parent="1" source="n_translator" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;labelBackgroundColor=#ffffff;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n_parse_en" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="345" y="425" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ja_zip" edge="1" parent="1" source="n_parse_ja" style="edgeStyle=orthogonalEdgeStyle;" target="n_zip">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_en_zip" edge="1" parent="1" source="n_parse_en" style="edgeStyle=orthogonalEdgeStyle;" target="n_zip">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_zip_tsv" edge="1" parent="1" source="n_zip" style="edgeStyle=orthogonalEdgeStyle;" target="n_tsv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tsv_store" edge="1" parent="1" source="n_tsv" style="edgeStyle=orthogonalEdgeStyle;" target="n_store">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_feedback" edge="1" parent="1" source="n_store" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#d6b656;fontColor=#b46504;fontSize=9;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_prev_ctx" value="次のシーンへ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-10" y="737" />
+              <mxPoint x="-10" y="132" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_results" edge="1" parent="1" source="n_store" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;labelBackgroundColor=#ffffff;" target="n_results" value="全シーン完了">
+          <mxGeometry relative="1" x="-0.1821" y="30" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="737" />
+              <mxPoint x="490" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

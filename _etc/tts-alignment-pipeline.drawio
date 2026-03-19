@@ -1,0 +1,229 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="0zFz-t8JsozyQqKHJFES" name="ページ-1">
+    <mxGraphModel dx="1960" dy="1390" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="tts_title" parent="1" style="text;html=1;fontSize=14;fontStyle=1;align=left;" value="TTSPipeline + AlignmentPipeline&amp;nbsp; 処理フロー" vertex="1">
+          <mxGeometry height="25" width="320" x="255" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="tts_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;opacity=40;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="570" width="840" x="10" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="n_tsv_in" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;scene_N.tsv&lt;/b&gt;&lt;br&gt;speaker | line | line_en" vertex="1">
+          <mxGeometry height="35" width="185" x="322.5" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="n_read_tsv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="read_tsv()&lt;br&gt;→ list[DialogueLine]" vertex="1">
+          <mxGeometry height="40" width="185" x="322.5" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="n_chunk_lines" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="chunk_max_bytes 上限でバイト分割" vertex="1">
+          <mxGeometry height="40" width="185" x="322.5" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="chunk_loop_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;opacity=50;pointerEvents=0;fontSize=11;fontStyle=1;verticalAlign=top;" value="for chunk in chunks (順次生成 / PCM 結合)" vertex="1">
+          <mxGeometry height="270" width="820" x="20" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="n_build_text" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="build text&lt;br&gt;日本語もしくは英語のテキストに、TTS用の演出指示プロンプトを加える" vertex="1">
+          <mxGeometry height="40" width="360" x="110" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="n_speech_cfg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="_build_speech_config()&lt;br&gt;設定ファイルから各話者の音声設定を決める" vertex="1">
+          <mxGeometry height="40" width="260" x="480" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="1j1Zk4zpMoox5dXR38No-2" edge="1" parent="1" source="n_gemini" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n_pcm_chunk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n_gemini" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="&lt;b&gt;Gemini generate_content&lt;/b&gt;" vertex="1">
+          <mxGeometry height="55" width="750" x="40" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="1j1Zk4zpMoox5dXR38No-1" edge="1" parent="1" source="n_pcm_chunk" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=0;" target="n_wav_out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n_pcm_chunk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="レスポンスをPCM bytes (base64 decode if str) 化" vertex="1">
+          <mxGeometry height="40" width="290" x="265" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="1j1Zk4zpMoox5dXR38No-3" edge="1" parent="1" source="n_wav_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" target="n_wav_in">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n_wav_out" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="&lt;b&gt;scene_N.wav&lt;/b&gt;&lt;br&gt;1シーン分の音声データとしてchunkを結合・ファイルに書き出し / PCM 24kHz 16bit mono" vertex="1">
+          <mxGeometry height="35" width="447.5" x="186.25" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="et1" edge="1" parent="1" source="n_tsv_in" style="edgeStyle=orthogonalEdgeStyle;" target="n_read_tsv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="et2" edge="1" parent="1" source="n_read_tsv" style="edgeStyle=orthogonalEdgeStyle;" target="n_chunk_lines">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="et3" edge="1" parent="1" source="n_chunk_lines" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_build_text">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="122" y="240" />
+              <mxPoint x="30" y="240" />
+              <mxPoint x="30" y="315" />
+              <mxPoint x="40" y="315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="et4" edge="1" parent="1" source="n_build_text" style="edgeStyle=orthogonalEdgeStyle;" target="n_gemini">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="et5" edge="1" parent="1" source="n_speech_cfg" style="edgeStyle=orthogonalEdgeStyle;" target="n_gemini">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="et_retry" edge="1" parent="1" source="n_gemini" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#ae4132;fontColor=#ae4132;fontSize=9;labelBackgroundColor=#ffffff;" target="n_gemini" value="エラー→リトライ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="387" />
+              <mxPoint x="840" y="330" />
+              <mxPoint x="790" y="330" />
+              <mxPoint x="790" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="et8" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="540" />
+              <mxPoint x="122" y="540" />
+            </Array>
+            <mxPoint x="650" y="475" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aln_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FB;strokeColor=#6c8ebf;opacity=40;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="710" width="840" x="10" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="n_tsv_in2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;scene_N.tsv&lt;/b&gt;" vertex="1">
+          <mxGeometry height="35" width="185" x="210" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="n_wav_in" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" value="&lt;b&gt;scene_N.wav&lt;/b&gt;&lt;br&gt;(TTSPipeline 出力)" vertex="1">
+          <mxGeometry height="35" width="185" x="435" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="n_stem_match" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="stem 名でペアリング&lt;br&gt;wav_by_stem = {p.stem: p for p in wav_paths}" vertex="1">
+          <mxGeometry height="40" width="410" x="210" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="scene_loop_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;opacity=50;pointerEvents=0;fontSize=11;fontStyle=1;verticalAlign=top;" value="for tsv_path in tsv_paths (シーン順次処理)" vertex="1">
+          <mxGeometry height="490" width="820" x="20" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="n_read_tsv2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="read_tsv(tsv_path)&lt;br&gt;→ list[DialogueLine]" vertex="1">
+          <mxGeometry height="40" width="185" x="40" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="align_scene_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=50;pointerEvents=0;fontSize=11;fontStyle=1;verticalAlign=top;" value="align_scene(lines, wav_path)" vertex="1">
+          <mxGeometry height="240" width="560" x="260" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="n_extract_parts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="extract parts&lt;br&gt;dl.line (ja) or dl.line_en (en)" vertex="1">
+          <mxGeometry height="40" width="220" x="280" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="n_transcript" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="join(&quot;\n&quot;) → transcript&lt;br&gt;compute offsets[] per line" vertex="1">
+          <mxGeometry height="40" width="220" x="280" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="n_elevenlabs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="&lt;b&gt;ElevenLabs Forced Alignment&lt;/b&gt;&lt;br&gt;forced_alignment.create(file=wav, text=transcript)" vertex="1">
+          <mxGeometry height="40" width="270" x="530" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="1j1Zk4zpMoox5dXR38No-6" edge="1" parent="1" source="n_char_times" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=0;" target="n_map_start">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n_char_times" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="result.characters&lt;br&gt;(char_times: per-char start times)" vertex="1">
+          <mxGeometry height="40" width="240" x="545" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="n_map_start" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="offsets[i] → char_times[offset].start&lt;br&gt;→ AlignedLine(start_time=...) × N" vertex="1">
+          <mxGeometry height="40" width="340" x="280" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="split_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;opacity=50;pointerEvents=0;fontSize=11;fontStyle=1;verticalAlign=top;" value="per-turn WAV 分割 (frame range per start_time diff)" vertex="1">
+          <mxGeometry height="165" width="800" x="30" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="n_frames" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="frame_start = int(sr × elapsed)&lt;br&gt;numframes = int(sr × diff_t)" vertex="1">
+          <mxGeometry height="40" width="230" x="50" y="1114" as="geometry" />
+        </mxCell>
+        <mxCell id="1j1Zk4zpMoox5dXR38No-4" edge="1" parent="1" source="n_save_split" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="n_write_tsv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n_save_split" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="_save_wav(pcm, scene_N_{frame_start}.wav)&lt;br&gt;→ AlignedLine.stem_file_path (absolute)" vertex="1">
+          <mxGeometry height="40" width="310" x="260" y="1184" as="geometry" />
+        </mxCell>
+        <mxCell id="n_split_out" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="&lt;b&gt;scene_N_{offset}.wav&lt;/b&gt;&lt;br&gt;per-turn split WAV" vertex="1">
+          <mxGeometry height="40" width="200" x="470" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="n_elapsed_note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="elapsed += diff_t&lt;br&gt;(累積オフセット更新)" vertex="1">
+          <mxGeometry height="40" width="180" x="640" y="1114" as="geometry" />
+        </mxCell>
+        <mxCell id="n_write_tsv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" value="_write_aligned_tsv()&lt;br&gt;scene_N_aligned.tsv" vertex="1">
+          <mxGeometry height="40" width="185" x="50" y="1184" as="geometry" />
+        </mxCell>
+        <mxCell id="n_aligned_out" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" value="&lt;b&gt;scene_N_aligned.tsv&lt;/b&gt;&lt;br&gt;speaker | line | line_en | start_time | stem_file_path" vertex="1">
+          <mxGeometry height="40" width="310" x="125" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="ea1" edge="1" parent="1" source="n_tsv_in2" style="edgeStyle=orthogonalEdgeStyle;" target="n_stem_match">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea2" edge="1" parent="1" source="n_wav_in" style="edgeStyle=orthogonalEdgeStyle;" target="n_stem_match">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea3" edge="1" parent="1" source="n_stem_match" style="edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="n_read_tsv2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="132" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea4" edge="1" parent="1" source="n_read_tsv2" style="edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_extract_parts">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="225" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea5" edge="1" parent="1" source="n_extract_parts" style="edgeStyle=orthogonalEdgeStyle;" target="n_transcript">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea6" edge="1" parent="1" source="n_transcript" style="edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n_elevenlabs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="960" />
+              <mxPoint x="510" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea7" edge="1" parent="1" source="n_elevenlabs" style="edgeStyle=orthogonalEdgeStyle;" target="n_char_times">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea9" edge="1" parent="1" source="n_transcript" style="edgeStyle=orthogonalEdgeStyle;" target="n_map_start">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="990" />
+              <mxPoint x="390" y="1020" />
+              <mxPoint x="465" y="1020" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea_retry" edge="1" parent="1" source="n_elevenlabs" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#ae4132;fontColor=#ae4132;fontSize=9;labelBackgroundColor=#ffffff;" target="n_elevenlabs" value="エラー→リトライ">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="897" />
+              <mxPoint x="840" y="845" />
+              <mxPoint x="800" y="845" />
+              <mxPoint x="800" y="870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea10" edge="1" parent="1" source="n_map_start" style="edgeStyle=orthogonalEdgeStyle;exitX=0.474;exitY=0.956;exitDx=0;exitDy=0;exitPerimeter=0;" target="n_frames">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea11" edge="1" parent="1" source="n_frames" style="edgeStyle=orthogonalEdgeStyle;" target="n_save_split">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea12" edge="1" parent="1" source="n_save_split" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;" target="n_split_out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea13" edge="1" parent="1" source="n_frames" style="edgeStyle=orthogonalEdgeStyle;" target="n_elapsed_note">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="280" y="1120" />
+              <mxPoint x="640" y="1120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea15" edge="1" parent="1" source="n_write_tsv" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#82b366;" target="n_aligned_out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
