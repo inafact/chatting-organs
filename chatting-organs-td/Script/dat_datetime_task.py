@@ -22,6 +22,8 @@ segment - an object describing the segment:
 		speed
 """
 from datetime import datetime
+from pathlib import Path
+import shutil
 import json
 
 def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
@@ -45,6 +47,9 @@ def onCycle(timerOp: timerCHOP, segment: Segment, cycle: int):
 		op("/project1/main_app").CallDMXPreset(29)
 
 	if _now.hour == 23 and _now.minute == 59 and _now.second > 58:
+		# - backup current schedule file
+		if Path("./schedule.bk").exists() and Path("./schedule.json").exists():
+			shutil.copy("./schedule.json", f"./scheulde.bk/schedule.{datetime.now():%y%m%d}.json")
 		# - self shutdown
 		op("/project1/main_app").Shutdown()
 
